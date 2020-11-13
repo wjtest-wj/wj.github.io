@@ -1,0 +1,880 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>Synchronized偏向锁 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">Synchronized偏向锁</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/Synchronized%E5%81%8F%E5%90%91%E9%94%81/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/java/">java</a>&nbsp;&bull;&nbsp;<a href="/categories/java/jvm/">jvm</a>&nbsp;&bull;&nbsp;<a href="/categories/java/jvm/Synchronized%E9%94%81/">Synchronized锁</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h2 id="DEMO"><a href="#DEMO" class="headerlink" title="DEMO"></a>DEMO</h2><pre><code>class MyThread extends Thread &#123;
+    static Object obj = new Object();
+
+    @Override
+    public void run() &#123;
+        for(int i = 0; i &lt; 5; i++) &#123;
+            synchronized (obj) &#123;
+                System.out.println(ClassLayout.parseInstance(obj).toPrintable());
+            &#125;
+        &#125;
+    &#125;
+&#125;
+java.lang.Object object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           05 70 47 27 (00000101 01110000 01000111 00100111) (658993157)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           e5 01 00 f8 (11100101 00000001 00000000 11111000) (-134217243)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+public static void main(String[] args) throws InterruptedException &#123;
+    List&lt;TestBiasedLocking&gt; list = new LinkedList&lt;&gt;();
+    new Thread(() -&gt; &#123;
+        for(int i = 0; i &lt; 50 ; i++) &#123;
+            TestBiasedLocking testBiasedLocking = new TestBiasedLocking();
+            list.add(testBiasedLocking);
+            synchronized (testBiasedLocking) &#123;
+                System.out.println(Thread.currentThread().getName() + &quot;-&quot; + (i + 1) + &quot;-&quot; + ClassLayout.parseInstance(testBiasedLocking).toPrintable());
+            &#125;
+        &#125;
+    &#125;, &quot;线程1&quot;).start();
+
+    Thread.sleep(5000);
+
+    new Thread(() -&gt; &#123;
+        for(int i = 0; i &lt; 30; i++) &#123;
+            TestBiasedLocking testBiasedLocking = list.get(i);
+            synchronized (testBiasedLocking) &#123;
+//                    System.out.print(&quot;第&quot; + (i + 1) + &quot;次加锁-线程2&quot;);
+                System.out.println(Thread.currentThread().getName() + &quot;-&quot; + (i + 1) + &quot;-&quot; + ClassLayout.parseInstance(testBiasedLocking).toPrintable());
+            &#125;
+        &#125;
+    &#125;, &quot;线程2&quot;).start();
+
+    LockSupport.park();
+&#125;
+线程1-50-klass.TestBiasedLocking object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           05 48 35 27 (00000101 01001000 00110101 00100111) (657803269)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           05 c1 00 f8 (00000101 11000001 00000000 11111000) (-134168315)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+线程2-19-klass.TestBiasedLocking object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           00 f2 c8 27 (00000000 11110010 11001000 00100111) (667480576)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           05 c1 00 f8 (00000101 11000001 00000000 11111000) (-134168315)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+线程2-20-klass.TestBiasedLocking object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           05 39 d0 27 (00000101 00111001 11010000 00100111) (667957509)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           05 c1 00 f8 (00000101 11000001 00000000 11111000) (-134168315)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total</code></pre>
+<h2 id="jvm重要类"><a href="#jvm重要类" class="headerlink" title="jvm重要类"></a>jvm重要类</h2><pre><code>BytecodeInterpreter
+private:
+    JavaThread*           _thread;        // the vm&#39;s java thread pointer
+    address               _bcp;           // instruction pointer
+    intptr_t*             _locals;        // local variable pointer
+    ConstantPoolCache*    _constants;     // constant pool cache
+    Method*               _method;        // method being executed
+    DataLayout*           _mdx;           // compiler profiling data for current bytecode
+    intptr_t*             _stack;         // expression stack
+    messages              _msg;           // frame manager &lt;-&gt; interpreter message
+    frame_manager_message _result;        // result to frame manager
+    interpreterState      _prev_link;     // previous interpreter state
+    oop                   _oop_temp;      // mirror for interpreted native, null otherwise
+    intptr_t*             _stack_base;    // base of expression stack 表达式栈的基址
+    intptr_t*             _stack_limit;   // limit of expression stack 表达式栈的栈顶
+    BasicObjectLock*      _monitor_base;  // base of monitors on the native stack 本地栈的监视器基址
+</code></pre>
+<h2 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h2><p><img src="%E5%81%8F%E5%90%91%E9%94%81%E8%BD%AC%E6%8D%A2%E6%B5%81%E7%A8%8B.png"><br><img src="%E5%81%8F%E5%90%91%E9%94%81%E8%BD%AC%E6%8D%A2%E6%B5%81%E7%A8%8B2.png"></p>
+<h3 id="加锁"><a href="#加锁" class="headerlink" title="加锁"></a>加锁</h3><ul>
+<li>默认新创建对象的mark word将是可偏向状态，此时mark word中的thread id为0，表示未偏向任何线程，也叫做匿名偏向</li>
+<li>当该对象第一次被线程获得锁的时候，发现是匿名偏向状态，则会用CAS指令，将mark word中的thread id由0改成当前线程id.如果成功，则代表获得了偏向锁,继续执行同步块中的代码。否则，将偏向锁撤销，升级为轻量级锁</li>
+<li>当被偏向的线程再次进入同步块时，发现锁对象偏向的就是当前线程，在通过一些额外的检查后，会往当前线程中添加一条Displaced Mark Word为空的Lock Record，然后继续执行同步块的代码，因为操作的栈，不需要用到CAS,开销忽略不计</li>
+<li>当其他线程进入同步块时，发现已经有偏向的线程了，则会进入到撤销偏向销的逻辑里，一般来说，会在safepoint中去查看偏向的线程是否还存活，如果存活且还在同步块中则将锁升级为轻量级锁，原偏向的线程继续拥有锁，当前线程则走入到锁升级的逻辑里；如果偏向的线程已经不存活或者不在同步块中，则将对象头的mark word改为无锁状态，之后再升级为轻量级锁  </li>
+</ul>
+<h3 id="解锁"><a href="#解锁" class="headerlink" title="解锁"></a>解锁</h3><p>当有其他线程尝试获得锁时，是根据遍历偏向线程的lock record来确定该线程是否还在执行同步块中的代码。因此偏向锁的解锁很简单，仅仅将栈中的最近一条lock record的obj字段设置为null.</p>
+<h3 id="批量重偏向与撤销"><a href="#批量重偏向与撤销" class="headerlink" title="批量重偏向与撤销"></a>批量重偏向与撤销</h3><p>针对的是锁的class对象<br>当有其他线程尝试获得锁时，偏向锁就需要等到safe point时将偏向锁撤销为无锁状态或升级为轻量级/重量级锁。偏向锁的撤销有一定成本，为了提高性能,jvm中增加了批量重偏向/撤销的机制<br>存在两种情况:</p>
+<ul>
+<li>一个线程创建了大量对象并执行了初始的同步操作，之后在另一个线程中将这些对象作为锁进行之后的操作。这种情况下，会导致大量的偏向锁撤销操作 -&gt; 批量重偏向</li>
+<li>存在明显多线程竞争的场景下使用偏向锁是不合适的，例如生产者/消费者队列 -&gt; 批量撤销<br>批量重偏向流程为:</li>
+<li>以class为单位，为每个class维护一个偏向锁撤销计数器，每一次该class对象发生偏向撤销操作时，该计数器+1</li>
+<li>当这个值达到重偏向阈值(默认20)时，JVM就认为该class的偏向锁有问题，因此会进行批量重偏向。</li>
+<li>每个class对象会有一个对应的epoch字段，每个处于偏向锁状态对象的mark word中也有该字段，其初始值为创建该对象时，class中的epoch的值。每次发生批量重偏向时，就将该值+1,同时遍历JVM中所有线程<br>的栈，找到该class所有正处于加锁状态的偏向锁，将其epoch字段改为新值。</li>
+<li>下次获得该锁对应的实例时，发现当前对象的epoch和class对象的epoch值不等，就算当前已经偏向了其他线程，也不会执行撤销操作，而是直接通过CAS操作<br>将其mark word的Thread ID改为当前线程ID<br>批量撤销流程为:</li>
+<li>当达到重偏向阈值后，假设该class计数器继续增长，当其达到批量撤销的阈值后(默认40),JVM认为该class的使用场景存在多线程竞争，会标记该class为不可偏向，之后，对于该class的锁，直接走轻量级锁的逻辑</li>
+</ul>
+<p>根据上图第二个DEMO,开始线程1执行50次，都是偏向锁(Sleep时间控制好),线程2执行1-19次都是轻量级锁，到20阈值，锁便可以从轻量级锁重偏向至偏向锁(所以该锁class对象的实例对象都需要重偏向)</p>
+<h2 id="底层实现"><a href="#底层实现" class="headerlink" title="底层实现"></a>底层实现</h2><ul>
+<li><p>java字节码中在同位块的入口位置和退出位置分别插入monitorenter和monitorexit字节码指令</p>
+</li>
+<li><p>jvm内部有bytecodeInterpreter.cpp对指令解释,但实际跑的是templateIntrpreter(模板解释器，因为其对每个指令都写了一段对应的汇编代码，效率高)</p>
+</li>
+<li><p>以下为bytecodeInterpreter内部实现原理</p>
+<h3 id="Lock-Record"><a href="#Lock-Record" class="headerlink" title="Lock Record"></a>Lock Record</h3><h3 id="prototype-header"><a href="#prototype-header" class="headerlink" title="prototype_header"></a>prototype_header</h3><p>标记该锁实例对象的epoch和偏向开关等信息</p>
+<h3 id="偏向锁的获取"><a href="#偏向锁的获取" class="headerlink" title="偏向锁的获取"></a>偏向锁的获取</h3><pre><code>CASE(_monitorenter): &#123;
+      //lockee就是锁对象
+      oop lockee = STACK_OBJECT(-1);
+      // derefing&#39;s lockee ought to provoke implicit null check
+      CHECK_NULL(lockee);
+      //找到一个空闲的Lock Record
+      // find a free monitor or one already allocated for this object
+      // if we find a matching object then we need a new monitor
+      // since this is recursive enter
+      BasicObjectLock* limit = istate-&gt;monitor_base(); //lockRecord基址，即从stack_base - monitor_base之间全是lockRecord
+      BasicObjectLock* most_recent = (BasicObjectLock*) istate-&gt;stack_base(); //表达式栈顶，上面是分配的lockRecord
+      BasicObjectLock* entry = NULL;
+      while (most_recent != limit ) &#123;
+        // 刚分配的，obj为空 赋为entry
+        if (most_recent-&gt;obj() == NULL) entry = most_recent;
+        else if (most_recent-&gt;obj() == lockee) break;
+        most_recent++;
+      &#125;
+      //entry不为NULL,代表还有空闲的Lock Record
+      if (entry != NULL) &#123;
+        //将Lock Record的obj指针指向锁对象
+        entry-&gt;set_obj(lockee);
+        int success = false;
+        uintptr_t epoch_mask_in_place = (uintptr_t)markOopDesc::epoch_mask_in_place;
+
+        //markoop即为对象头的mark word
+        markOop mark = lockee-&gt;mark();
+        intptr_t hash = (intptr_t) markOopDesc::no_hash;
+        // implies UseBiasedLocking
+          //如果锁对象的mark word的状态是偏向模式，检查对象头倒数第三位是否为1 (mask_bits(value(), biased_lock_mask_in_place) == biased_lock_pattern);  biased_lock_mask_in_place= biased_lock_mask &lt;&lt; lock_shift, 
+        if (mark-&gt;has_bias_pattern()) &#123;
+          uintptr_t thread_ident;
+          uintptr_t anticipated_bias_locking_value;
+          thread_ident = (uintptr_t)istate-&gt;thread();
+          anticipated_bias_locking_value =
+            (((uintptr_t)lockee-&gt;klass()-&gt;prototype_header() | thread_ident) ^ (uintptr_t)mark) &amp;
+            ~((uintptr_t) markOopDesc::age_mask_in_place);
+
+              //如果偏向的线程是自己且epoch等于class的epoch 返回成功
+          if  (anticipated_bias_locking_value == 0) &#123;
+            // already biased towards this thread, nothing to do
+            if (PrintBiasedLockingStatistics) &#123;
+              (* BiasedLocking::biased_lock_entry_count_addr())++;
+            &#125;
+            success = true;
+          &#125;
+              //如果偏向模式模式关闭，则尝试撤销偏向锁
+          else if ((anticipated_bias_locking_value &amp; markOopDesc::biased_lock_mask_in_place) != 0) &#123;
+            // try revoke bias
+            markOop header = lockee-&gt;klass()-&gt;prototype_header();
+            if (hash != markOopDesc::no_hash) &#123;
+              header = header-&gt;copy_set_hash(hash);
+            &#125;
+              //利用CAS操作将mark word替换为class中的mark word
+            if (Atomic::cmpxchg_ptr(header, lockee-&gt;mark_addr(), mark) == mark) &#123;
+              if (PrintBiasedLockingStatistics)
+                (*BiasedLocking::revoked_lock_entry_count_addr())++;
+            &#125;
+          &#125;
+          // 如果epoch不等于class中的epoch,则尝试重偏向
+          else if ((anticipated_bias_locking_value &amp; epoch_mask_in_place) !=0) &#123;
+            // try rebias
+              //构造一个偏向当前线程的mark word
+            markOop new_header = (markOop) ( (intptr_t) lockee-&gt;klass()-&gt;prototype_header() | thread_ident);
+            if (hash != markOopDesc::no_hash) &#123;
+              new_header = new_header-&gt;copy_set_hash(hash);
+            &#125;
+              // CAS替换对象头的mark word
+            if (Atomic::cmpxchg_ptr((void*)new_header, lockee-&gt;mark_addr(), mark) == mark) &#123;
+              if (PrintBiasedLockingStatistics)
+                (* BiasedLocking::rebiased_lock_entry_count_addr())++;
+            &#125;
+            else &#123;
+              //重偏向失败，代表存在多线程竞争，则调用monitorenter方法进行锁升级
+              CALL_VM(InterpreterRuntime::monitorenter(THREAD, entry), handle_exception);
+            &#125;
+            success = true;
+          &#125;
+          else &#123;
+              //走到这里说明当前要么偏向别的线程，要么是匿名偏向(即没有偏向任何线程)
+              //构建一个匿名偏向的mark word,尝试用CAS指令替换掉锁对象的mark word
+            // try to bias towards thread in case object is anonymously biased
+            markOop header = (markOop) ((uintptr_t) mark &amp; ((uintptr_t)markOopDesc::biased_lock_mask_in_place |
+                                                            (uintptr_t)markOopDesc::age_mask_in_place |
+                                                            epoch_mask_in_place));
+            if (hash != markOopDesc::no_hash) &#123;
+              header = header-&gt;copy_set_hash(hash);
+            &#125;
+            markOop new_header = (markOop) ((uintptr_t) header | thread_ident);
+            // debugging hint
+            DEBUG_ONLY(entry-&gt;lock()-&gt;set_displaced_header((markOop) (uintptr_t) 0xdeaddead);)
+            if (Atomic::cmpxchg_ptr((void*)new_header, lockee-&gt;mark_addr(), header) == header) &#123;
+              //cas修改成功
+              if (PrintBiasedLockingStatistics)
+                (* BiasedLocking::anonymously_biased_lock_entry_count_addr())++;
+            &#125;
+            else &#123;
+              //如果修改失败说明存在多线程竞争，所以进入monitorenter方法
+              CALL_VM(InterpreterRuntime::monitorenter(THREAD, entry), handle_exception);
+            &#125;
+            success = true;
+          &#125;
+        &#125;
+
+        // traditional lightweight locking
+          //如果偏向线程不是当前线程或没有开启偏向模式挺丰富的人因都会导致success = false
+        if (!success) &#123;
+          //轻量级锁的逻辑
+          //构造一个无锁状态的Displaced Mark Word,并将Lock Record的lock指向它
+          markOop displaced = lockee-&gt;mark()-&gt;set_unlocked();
+          entry-&gt;lock()-&gt;set_displaced_header(displaced);
+          //如果指定了-XX:+UseHeavYMonitors,则call_vm=true,代表禁用偏向锁和轻量级锁
+          bool call_vm = UseHeavyMonitors;
+          if (call_vm || Atomic::cmpxchg_ptr(entry, lockee-&gt;mark_addr(), displaced) != displaced) &#123;
+              //判断是不是锁重入
+            // Is it simple recursive case?
+            if (!call_vm &amp;&amp; THREAD-&gt;is_lock_owned((address) displaced-&gt;clear_lock_bits())) &#123; //如果是锁重入，则直接将Displaced Mark Word设置为null
+              entry-&gt;lock()-&gt;set_displaced_header(NULL);
+            &#125; else &#123;
+              CALL_VM(InterpreterRuntime::monitorenter(THREAD, entry), handle_exception);
+            &#125;
+          &#125;
+        &#125;
+        UPDATE_PC_AND_TOS_AND_CONTINUE(1, -1);
+      &#125; else &#123;
+          //lock record不够，重新执行
+        istate-&gt;set_msg(more_monitors);
+        UPDATE_PC_AND_RETURN(0); // Re-execute
+      &#125;
+    &#125;
+以正为当检测到当前栈不存在可用的monitor时，则新分配一个monitor 分配后，再调用消息got_monitors再返回执行
+else if (istate-&gt;msg() == BytecodeInterpreter::more_monitors) &#123; // 创建一个新的monitor
+    int monitor_words = frame::interpreter_frame_monitor_size(); // return BasicObjectLock::size();
+    // Allocate the space
+    stack-&gt;overflow_check(monitor_words, THREAD); // 检测当前线程是否溢出
+    if (HAS_PENDING_EXCEPTION)
+      break;
+    stack-&gt;alloc(monitor_words * wordSize); // 申请monitorObjectLock内存
+    // Move the expression stack contents
+    for (intptr_t *p = istate-&gt;stack() + 1; p &lt; istate-&gt;stack_base(); p++)
+      *(p - monitor_words) = *p;
+    // Move the expression stack pointers
+    istate-&gt;set_stack_limit(istate-&gt;stack_limit() - monitor_words); // limit of expression stack
+    istate-&gt;set_stack(istate-&gt;stack() - monitor_words);    // // expression stack
+    istate-&gt;set_stack_base(istate-&gt;stack_base() - monitor_words); //base of expression stack
+    // Zero the new monitor so the interpreter can find it.
+    ((BasicObjectLock *) istate-&gt;stack_base())-&gt;set_obj(NULL); // 整个entry中的object是null；
+    // Resume the interpreter
+    istate-&gt;set_msg(BytecodeInterpreter::got_monitors);
+  &#125;</code></pre>
+<h4 id="代码执行流程"><a href="#代码执行流程" class="headerlink" title="代码执行流程"></a>代码执行流程</h4></li>
+<li><p>从当前线程的栈中找到一个空闲的Lock Record(BasicObjectLock和BasicLock实现,主要用于存储锁对象的Mark Word值及计数重入。) 没有则发消息申请创建</p>
+</li>
+<li><p>获取到Lock Record后，将其obj字段赋值为lockee(锁对象Mark Word)</p>
+</li>
+<li><p>判断锁对象的mark word是否是偏向模式,markword最低3位为101 anticipated_bias_locking_value = (((uintptr_t)lockee-&gt;klass()-&gt;prototype_header() | thread_ident) ^ (uintptr_t)mark) &amp; ​ ~((uintptr_t) markOopDesc::age_mask_in_place);<br>  1, anticipated_bias_locking_value = (((uintptr_t)lockee-&gt;klass()-&gt;prototype_header() | thread_ident) 将当前线程id和类的prototype_header相或，这查得到的值为(当前线程id + prototype_header中的(epoch + 分代年龄+偏向锁标志+锁标志位))<br>  2, ^(uintptr_t)mark 将上面得到的结果与锁对象的markOop进行异或，相等的位全被置为0,只剩下不等的位<br>  3, &amp; ~((uintptr_t)) markOopDesc::age_mask_in_place) markOopDesc::age_mask_in_place为0001111000,取反后，变成…1110000111 除了分代年龄那4位，其余全为1，将取反后的结果再与上面的结果相与，将面异或得到的结果中分代年龄给忽略掉</p>
+</li>
+<li><p>anticipated_bias_locking_value == 0代表偏向的线程是当前线程且mark word的epoch等于class的epoch,这种情况什么都不用做</p>
+</li>
+<li><p>(anticipated_bias_locking_value &amp; markOopDesc::biased_lock_mask_in_place) != 0 代表class的prototype_header或对象的mark word中偏向模式，又因为走到这已经通过了mark-&gt;has_bias_pattern判断，即对象的mark word中偏向模式是开启的，那也就是说class的prototype_header不是偏向模式</p>
+</li>
+<li><p>然后利用CAS指令Atomic::cmpxchg_ptr(header, lockee-&gt;mark_addr(), mark) == mark撤销偏向锁</p>
+</li>
+<li><p>如果epoch已过期，则需要重偏向，利用CAS指令将锁对象的mark word替换为一个偏向当前线程且epoch为类的epoch的新的mark word</p>
+</li>
+<li><p>CAS将偏向线程改为当前线程，如果当前是匿名偏向则能修改成功，否则进入锁升级的逻辑</p>
+</li>
+<li><p>如果是锁重入，则将Lock Record的Displaced Mark Word设置为null,起到一个锁重入计数的作用</p>
+</li>
+</ul>
+<h3 id="偏向锁的撤销"><a href="#偏向锁的撤销" class="headerlink" title="偏向锁的撤销"></a>偏向锁的撤销</h3><pre><code>IRT_ENTRY_NO_ASYNC(void, InterpreterRuntime::monitorenter(JavaThread* thread, BasicObjectLock* elem))
+#ifdef ASSERT
+  thread-&gt;last_frame().interpreter_frame_verify_monitor(elem);
+#endif
+  if (PrintBiasedLockingStatistics) &#123;
+    Atomic::inc(BiasedLocking::slow_path_entry_count_addr());
+  &#125;
+  Handle h_obj(thread, elem-&gt;obj());
+  assert(Universe::heap()-&gt;is_in_reserved_or_null(h_obj()),
+         &quot;must be NULL or an object&quot;);
+  if (UseBiasedLocking) &#123; //开启了偏向锁
+    // Retry fast entry if bias is revoked to avoid unnecessary inflation
+    ObjectSynchronizer::fast_enter(h_obj, elem-&gt;lock(), true, CHECK);
+  &#125; else &#123; //未开启偏向锁
+    ObjectSynchronizer::slow_enter(h_obj, elem-&gt;lock(), CHECK);
+  &#125;
+  assert(Universe::heap()-&gt;is_in_reserved_or_null(elem-&gt;obj()),
+         &quot;must be NULL or an object&quot;);
+#ifdef ASSERT
+  thread-&gt;last_frame().interpreter_frame_verify_monitor(elem);
+#endif
+IRT_END
+
+void ObjectSynchronizer::fast_enter(Handle obj, BasicLock* lock, bool attempt_rebias, TRAPS) &#123;
+ if (UseBiasedLocking) &#123;
+    //不在safepoint
+    if (!SafepointSynchronize::is_at_safepoint()) &#123;
+      //偏向锁撤销或重偏向
+      BiasedLocking::Condition cond = BiasedLocking::revoke_and_rebias(obj, attempt_rebias, THREAD);
+      if (cond == BiasedLocking::BIAS_REVOKED_AND_REBIASED) &#123;
+        return;
+      &#125;
+    &#125; else &#123;
+      //偏向锁撤销
+      assert(!attempt_rebias, &quot;can not rebias toward VM thread&quot;);
+      BiasedLocking::revoke_at_safepoint(obj);
+    &#125;
+    assert(!obj-&gt;mark()-&gt;has_bias_pattern(), &quot;biases should be revoked by now&quot;);
+ &#125;
+
+ slow_enter (obj, lock, THREAD) ;
+&#125;
+
+BiasedLocking::Condition BiasedLocking::revoke_and_rebias(Handle obj, bool attempt_rebias, TRAPS) &#123;
+  assert(!SafepointSynchronize::is_at_safepoint(), &quot;must not be called while at safepoint&quot;);
+
+  // We can revoke the biases of anonymously-biased objects
+  // efficiently enough that we should not cause these revocations to
+  // update the heuristics because doing so may cause unwanted bulk
+  // revocations (which are expensive) to occur.
+  markOop mark = obj-&gt;mark();
+  if (mark-&gt;is_biased_anonymously() &amp;&amp; !attempt_rebias) &#123;
+    //匿名偏向且attempt_rebias==false会走到这里，如锁对象的hashcode方法被调用会出现这种情况，需要撤销偏向锁
+    // We are probably trying to revoke the bias of this object due to
+    // an identity hash code computation. Try to revoke the bias
+    // without a safepoint. This is possible if we can successfully
+    // compare-and-exchange an unbiased header into the mark word of
+    // the object, meaning that no other thread has raced to acquire
+    // the bias of the object.
+    markOop biased_value       = mark;
+    markOop unbiased_prototype = markOopDesc::prototype()-&gt;set_age(mark-&gt;age());
+    markOop res_mark = (markOop) Atomic::cmpxchg_ptr(unbiased_prototype, obj-&gt;mark_addr(), mark);
+    if (res_mark == biased_value) &#123;
+      return BIAS_REVOKED;
+    &#125;
+  &#125; else if (mark-&gt;has_bias_pattern()) &#123;
+    //锁对象开启了偏向模式会走到这里
+    Klass* k = obj-&gt;klass();
+    markOop prototype_header = k-&gt;prototype_header();
+    //如果class对象关闭了偏向模式
+    if (!prototype_header-&gt;has_bias_pattern()) &#123;
+      // This object has a stale bias from before the bulk revocation
+      // for this data type occurred. It&#39;s pointless to update the
+      // heuristics at this point so simply update the header with a
+      // CAS. If we fail this race, the object&#39;s bias has been revoked
+      // by another thread so we simply return and let the caller deal
+      // with it.
+      markOop biased_value       = mark;
+      markOop res_mark = (markOop) Atomic::cmpxchg_ptr(prototype_header, obj-&gt;mark_addr(), mark);
+      assert(!(*(obj-&gt;mark_addr()))-&gt;has_bias_pattern(), &quot;even if we raced, should still be revoked&quot;);
+      return BIAS_REVOKED;
+    //如果epoch过期
+    &#125; else if (prototype_header-&gt;bias_epoch() != mark-&gt;bias_epoch()) &#123;
+      // The epoch of this biasing has expired indicating that the
+      // object is effectively unbiased. Depending on whether we need
+      // to rebias or revoke the bias of this object we can do it
+      // efficiently enough with a CAS that we shouldn&#39;t update the
+      // heuristics. This is normally done in the assembly code but we
+      // can reach this point due to various points in the runtime
+      // needing to revoke biases.
+      if (attempt_rebias) &#123;
+        assert(THREAD-&gt;is_Java_thread(), &quot;&quot;);
+        markOop biased_value       = mark;
+        markOop rebiased_prototype = markOopDesc::encode((JavaThread*) THREAD, mark-&gt;age(), prototype_header-&gt;bias_epoch());
+        markOop res_mark = (markOop) Atomic::cmpxchg_ptr(rebiased_prototype, obj-&gt;mark_addr(), mark);
+        if (res_mark == biased_value) &#123;
+          return BIAS_REVOKED_AND_REBIASED;
+        &#125;
+      &#125; else &#123;
+        markOop biased_value       = mark;
+        markOop unbiased_prototype = markOopDesc::prototype()-&gt;set_age(mark-&gt;age());
+        markOop res_mark = (markOop) Atomic::cmpxchg_ptr(unbiased_prototype, obj-&gt;mark_addr(), mark);
+        if (res_mark == biased_value) &#123;
+          return BIAS_REVOKED;
+        &#125;
+      &#125;
+    &#125;
+  &#125;
+  //批量重偏向与批量撤销的逻辑
+  HeuristicsResult heuristics = update_heuristics(obj(), attempt_rebias);
+  if (heuristics == HR_NOT_BIASED) &#123;
+    return NOT_BIASED;
+  &#125; else if (heuristics == HR_SINGLE_REVOKE) &#123;
+    //撤销单个线程 这种情况发现在线程1偏向锁，线程2尝试获取锁失败
+    Klass *k = obj-&gt;klass();
+    markOop prototype_header = k-&gt;prototype_header();
+    if (mark-&gt;biased_locker() == THREAD &amp;&amp;
+        prototype_header-&gt;bias_epoch() == mark-&gt;bias_epoch()) &#123;
+      // A thread is trying to revoke the bias of an object biased
+      // toward it, again likely due to an identity hash code
+      // computation. We can again avoid a safepoint in this case
+      // since we are only going to walk our own stack. There are no
+      // races with revocations occurring in other threads because we
+      // reach no safepoints in the revocation path.
+      // Also check the epoch because even if threads match, another thread
+      // can come in with a CAS to steal the bias of an object that has a
+      // stale epoch.
+      ResourceMark rm;
+      if (TraceBiasedLocking) &#123;
+        tty-&gt;print_cr(&quot;Revoking bias by walking my own stack:&quot;);
+      &#125;
+      EventBiasedLockSelfRevocation event;
+      BiasedLocking::Condition cond = revoke_bias(obj(), false, false, (JavaThread*) THREAD, NULL);
+      ((JavaThread*) THREAD)-&gt;set_cached_monitor_info(NULL);
+      assert(cond == BIAS_REVOKED, &quot;why not?&quot;);
+      if (event.should_commit()) &#123;
+        event.set_lockClass(k);
+        event.commit();
+      &#125;
+      return cond;
+    &#125; else &#123;
+      EventBiasedLockRevocation event;
+      VM_RevokeBias revoke(&amp;obj, (JavaThread*) THREAD);
+      VMThread::execute(&amp;revoke);
+      if (event.should_commit() &amp;&amp; (revoke.status_code() != NOT_BIASED)) &#123;
+        event.set_lockClass(k);
+        // Subtract 1 to match the id of events committed inside the safepoint
+        event.set_safepointId(SafepointSynchronize::safepoint_counter() - 1);
+        event.set_previousOwner(revoke.biased_locker());
+        event.commit();
+      &#125;
+      return revoke.status_code();
+    &#125;
+  &#125;
+
+  assert((heuristics == HR_BULK_REVOKE) ||
+         (heuristics == HR_BULK_REBIAS), &quot;?&quot;);
+  EventBiasedLockClassRevocation event;
+  //批量撤销 批量重偏向逻辑
+  VM_BulkRevokeBias bulk_revoke(&amp;obj, (JavaThread*) THREAD,
+                                (heuristics == HR_BULK_REBIAS),
+                                attempt_rebias);
+  VMThread::execute(&amp;bulk_revoke);
+  if (event.should_commit()) &#123;
+    event.set_revokedClass(obj-&gt;klass());
+    event.set_disableBiasing((heuristics != HR_BULK_REBIAS));
+    // Subtract 1 to match the id of events committed inside the safepoint
+    event.set_safepointId(SafepointSynchronize::safepoint_counter() - 1);
+    event.commit();
+  &#125;
+  return bulk_revoke.status_code();
+&#125;
+
+
+static BiasedLocking::Condition revoke_bias(oop obj, bool allow_rebias, bool is_bulk, JavaThread* requesting_thread, JavaThread** biased_locker) &#123;
+  markOop mark = obj-&gt;mark();
+  //如果没有开启偏向锁模式，则直接返回NOT_BIASED
+  if (!mark-&gt;has_bias_pattern()) &#123;
+    if (TraceBiasedLocking) &#123;
+      ResourceMark rm;
+      tty-&gt;print_cr(&quot;  (Skipping revocation of object of type %s because it&#39;s no longer biased)&quot;,
+                    obj-&gt;klass()-&gt;external_name());
+    &#125;
+    return BiasedLocking::NOT_BIASED;
+  &#125;
+
+  uint age = mark-&gt;age();
+  //构建两个mark word 一个是匿名偏向模式，一个是无锁模式
+  markOop   biased_prototype = markOopDesc::biased_locking_prototype()-&gt;set_age(age);
+  markOop unbiased_prototype = markOopDesc::prototype()-&gt;set_age(age);
+
+  if (TraceBiasedLocking &amp;&amp; (Verbose || !is_bulk)) &#123;
+    ResourceMark rm;
+    tty-&gt;print_cr(&quot;Revoking bias of object &quot; INTPTR_FORMAT &quot; , mark &quot; INTPTR_FORMAT &quot; , type %s , prototype header &quot; INTPTR_FORMAT &quot; , allow rebias %d , requesting thread &quot; INTPTR_FORMAT,
+                  p2i((void *)obj), (intptr_t) mark, obj-&gt;klass()-&gt;external_name(), (intptr_t) obj-&gt;klass()-&gt;prototype_header(), (allow_rebias ? 1 : 0), (intptr_t) requesting_thread);
+  &#125;
+
+  JavaThread* biased_thread = mark-&gt;biased_locker();
+  if (biased_thread == NULL) &#123;
+    // Object is anonymously biased. We can get here if, for
+    // example, we revoke the bias due to an identity hash code
+    // being computed for an object.
+    //匿名偏向。当调用锁的hashcode方法会进入这里，如果不允许偏向，则将锁的mark word设置为无锁模式
+    if (!allow_rebias) &#123;
+      obj-&gt;set_mark(unbiased_prototype);
+    &#125;
+    if (TraceBiasedLocking &amp;&amp; (Verbose || !is_bulk)) &#123;
+      tty-&gt;print_cr(&quot;  Revoked bias of anonymously-biased object&quot;);
+    &#125;
+    return BiasedLocking::BIAS_REVOKED;
+  &#125;
+
+  // Handle case where the thread toward which the object was biased has exited
+  //判断偏向线程是否还存活
+  bool thread_is_alive = false;
+  if (requesting_thread == biased_thread) &#123;
+    //如果当前线程就是偏向线程，则肯定存活
+    thread_is_alive = true;
+  &#125; else &#123;
+    //遍历jvm所有线程，如果能找到，则说明偏向线程还存活
+    for (JavaThread* cur_thread = Threads::first(); cur_thread != NULL; cur_thread = cur_thread-&gt;next()) &#123;
+      if (cur_thread == biased_thread) &#123;
+        thread_is_alive = true;
+        break;
+      &#125;
+    &#125;
+  &#125;
+  if (!thread_is_alive) &#123;
+    //如果偏向线程已经死亡
+    //如果允许偏向则将对象mark word设置为匿名偏向状态，否则设置为无锁状态
+    if (allow_rebias) &#123;
+      obj-&gt;set_mark(biased_prototype);
+    &#125; else &#123;
+      obj-&gt;set_mark(unbiased_prototype);
+    &#125;
+    if (TraceBiasedLocking &amp;&amp; (Verbose || !is_bulk)) &#123;
+      tty-&gt;print_cr(&quot;  Revoked bias of object biased toward dead thread&quot;);
+    &#125;
+    return BiasedLocking::BIAS_REVOKED;
+  &#125;
+
+  // Thread owning bias is alive.
+  // Check to see whether it currently owns the lock and, if so,
+  // write down the needed displaced headers to the thread&#39;s stack.
+  // Otherwise, restore the object&#39;s header either to the unlocked
+  // or unbiased state.
+  // 线程还存活 检查是否为当前线程拥有
+  //获取偏向线程中的所有monitor_info
+  GrowableArray&lt;MonitorInfo*&gt;* cached_monitor_info = get_or_compute_monitor_info(biased_thread);
+  BasicLock* highest_lock = NULL;
+  for (int i = 0; i &lt; cached_monitor_info-&gt;length(); i++) &#123;
+    MonitorInfo* mon_info = cached_monitor_info-&gt;at(i);
+    //如果能找到对应的monitor_info的owner指向obj 则说明偏向的线程还在执行同块代码块的代码
+    if (mon_info-&gt;owner() == obj) &#123;
+      if (TraceBiasedLocking &amp;&amp; Verbose) &#123;
+        tty-&gt;print_cr(&quot;   mon_info-&gt;owner (&quot; PTR_FORMAT &quot;) == obj (&quot; PTR_FORMAT &quot;)&quot;,
+                      p2i((void *) mon_info-&gt;owner()),
+                      p2i((void *) obj));
+      &#125;
+      // 需要升级为轻量级锁，直接修改偏向线程栈中的Lock Record 为了处理锁重入的case 在这里将Lock Record的Displaced Mark Word设为null,第一个Lock Record会在下面的代码中再处理
+      // Assume recursive case and fix up highest lock later
+      markOop mark = markOopDesc::encode((BasicLock*) NULL);
+      highest_lock = mon_info-&gt;lock();
+      highest_lock-&gt;set_displaced_header(mark);
+    &#125; else &#123;
+      if (TraceBiasedLocking &amp;&amp; Verbose) &#123;
+        tty-&gt;print_cr(&quot;   mon_info-&gt;owner (&quot; PTR_FORMAT &quot;) != obj (&quot; PTR_FORMAT &quot;)&quot;,
+                      p2i((void *) mon_info-&gt;owner()),
+                      p2i((void *) obj));
+      &#125;
+    &#125;
+  &#125;
+  if (highest_lock != NULL) &#123;
+    // Fix up highest lock to contain displaced header and point
+    // object at it
+    //修改第一个Lock Record为无锁状态，然后将obj的mark word设置为指向该Lock Record的指针
+    highest_lock-&gt;set_displaced_header(unbiased_prototype);
+    // Reset object header to point to displaced mark.
+    // Must release storing the lock address for platforms without TSO
+    // ordering (e.g. ppc).
+    obj-&gt;release_set_mark(markOopDesc::encode(highest_lock));
+    assert(!obj-&gt;mark()-&gt;has_bias_pattern(), &quot;illegal mark state: stack lock used bias bit&quot;);
+    if (TraceBiasedLocking &amp;&amp; (Verbose || !is_bulk)) &#123;
+      tty-&gt;print_cr(&quot;  Revoked bias of currently-locked object&quot;);
+    &#125;
+  &#125; else &#123;
+    //走到这里说明偏向线程已经不在同步块中了
+    if (TraceBiasedLocking &amp;&amp; (Verbose || !is_bulk)) &#123;
+      tty-&gt;print_cr(&quot;  Revoked bias of currently-unlocked object&quot;);
+    &#125;
+    if (allow_rebias) &#123;
+        //设置为匿名偏向状态
+      obj-&gt;set_mark(biased_prototype);
+    &#125; else &#123;
+      // Store the unlocked value into the object&#39;s header.
+        //将mark word设置为无锁状态
+      obj-&gt;set_mark(unbiased_prototype);
+    &#125;
+  &#125;
+
+#if INCLUDE_JFR
+  // If requested, return information on which thread held the bias
+  if (biased_locker != NULL) &#123;
+    *biased_locker = biased_thread;
+  &#125;
+#endif // INCLUDE_JFR
+
+  return BiasedLocking::BIAS_REVOKED;
+&#125;</code></pre>
+<p>获取偏向锁的过程因为不满足条件导致要将锁对象改为非偏向锁状态</p>
+<h4 id="执行流程"><a href="#执行流程" class="headerlink" title="执行流程"></a>执行流程</h4><ul>
+<li>查看偏向的线程是否存活，如果已经死亡，则直接撤销偏向锁。JVM维护了一个集合存放所有存活的线程，通过遍历即可判断</li>
+<li>偏向的线程是否还在同步块中，如果不在了，则撤销偏向锁。</li>
+<li>将偏向线程所有相关Lock Record的Displaced Mark Word设置为null,然后将最高位的Lock Record的Displaced Mark Word(Lock Record的_displaced_header属性)设置为无锁状态，最高位的Lock Record也就是第一次获得锁时<br>的Lock Record，然后将对象头指向最高位的Lock Record,这里不需要用CAS指令，因为是在safepoint.执行完后，就升级成了轻量级锁。原偏向线程的所有Lock Record都已经变成轻量级锁的状态。</li>
+</ul>
+<h3 id="偏向锁的释放"><a href="#偏向锁的释放" class="headerlink" title="偏向锁的释放"></a>偏向锁的释放</h3><pre><code> CASE(_monitorexit): &#123;
+        oop lockee = STACK_OBJECT(-1);
+        CHECK_NULL(lockee);
+        // derefing&#39;s lockee ought to provoke implicit null check
+        // find our monitor slot
+        BasicObjectLock* limit = istate-&gt;monitor_base();
+        BasicObjectLock* most_recent = (BasicObjectLock*) istate-&gt;stack_base();
+        //从低向高遍历栈的Lock Record
+        while (most_recent != limit ) &#123;
+          if ((most_recent)-&gt;obj() == lockee) &#123;
+            BasicLock* lock = most_recent-&gt;lock();
+            markOop header = lock-&gt;displaced_header();
+            //释放Lock Record
+            most_recent-&gt;set_obj(NULL);
+            //如果是偏向模式，仅仅释放Lock Record就好了。否则就要走轻量级锁或重量级锁的释放流程
+           if (!lockee-&gt;mark()-&gt;has_bias_pattern()) &#123;
+              bool call_vm = UseHeavyMonitors;
+              // If it isn&#39;t recursive we either must swap old header or call the runtime
+              if (header != NULL || call_vm) &#123;
+                if (call_vm || Atomic::cmpxchg_ptr(header, lockee-&gt;mark_addr(), lock) != lock) &#123;
+                  // restore object for the slow case
+                  most_recent-&gt;set_obj(lockee);
+                  CALL_VM(InterpreterRuntime::monitorexit(THREAD, most_recent), handle_exception);
+                &#125;
+              &#125;
+            &#125;
+            UPDATE_PC_AND_TOS_AND_CONTINUE(1, -1);
+          &#125;
+          most_recent++;
+        &#125;
+        // Need to throw illegal monitor state exception
+        CALL_VM(InterpreterRuntime::throw_illegal_monitor_state_exception(THREAD), handle_exception);
+        ShouldNotReachHere();
+      &#125;</code></pre>
+<h3 id="批量重偏向和批量撤销"><a href="#批量重偏向和批量撤销" class="headerlink" title="批量重偏向和批量撤销"></a>批量重偏向和批量撤销</h3><pre><code>在revoke_and_rebias中update_heuristics方法会计算对应的结果是批量重偏向(HR_BULK_REVOKE)不是批量撤销(HR_BULK_REBIAS)
+static HeuristicsResult update_heuristics(oop o, bool allow_rebias) &#123;
+  markOop mark = o-&gt;mark();
+  if (!mark-&gt;has_bias_pattern()) &#123;
+    //非偏向模式 则直接返回不偏向
+    return HR_NOT_BIASED;
+  &#125;
+
+  // Heuristics to attempt to throttle the number of revocations.
+  // Stages:
+  // 1. Revoke the biases of all objects in the heap of this type,
+  //    but allow rebiasing of those objects if unlocked.
+  // 2. Revoke the biases of all objects in the heap of this type
+  //    and don&#39;t allow rebiasing of these objects. Disable
+  //    allocation of objects of that type with the bias bit set.
+  // 获取锁对象的class对象
+  Klass* k = o-&gt;klass();
+  jlong cur_time = os::javaTimeMillis();
+  // 该类上一次批量撤销的时间
+  jlong last_bulk_revocation_time = k-&gt;last_biased_lock_bulk_revocation_time();
+  // 该类偏向锁撤销的次数
+  int revocation_count = k-&gt;biased_lock_revocation_count();
+  // BiasedLockingBulkRebiasThreshold为批量重偏向阈值(默认20)
+  // BiasedLockingBulkRevokeThreshold为批量撤销阈值(默认40)
+  if ((revocation_count &gt;= BiasedLockingBulkRebiasThreshold) &amp;&amp;
+      (revocation_count &lt;  BiasedLockingBulkRevokeThreshold) &amp;&amp;
+      (last_bulk_revocation_time != 0) &amp;&amp;
+      (cur_time - last_bulk_revocation_time &gt;= BiasedLockingDecayTime)) &#123;
+    // This is the first revocation we&#39;ve seen in a while of an
+    // object of this type since the last time we performed a bulk
+    // rebiasing operation. The application is allocating objects in
+    // bulk which are biased toward a thread and then handing them
+    // off to another thread. We can cope with this allocation
+    // pattern via the bulk rebiasing mechanism so we reset the
+    // klass&#39;s revocation count rather than allow it to increase
+    // monotonically. If we see the need to perform another bulk
+    // rebias operation later, we will, and if subsequently we see
+    // many more revocation operations in a short period of time we
+    // will completely disable biasing for this type.
+    k-&gt;set_biased_lock_revocation_count(0);
+    revocation_count = 0;
+  &#125;
+
+  // Make revocation count saturate just beyond BiasedLockingBulkRevokeThreshold
+  // 自动撤销计数器
+  if (revocation_count &lt;= BiasedLockingBulkRevokeThreshold) &#123;
+    revocation_count = k-&gt;atomic_incr_biased_lock_revocation_count();
+  &#125;
+
+  // 达到阈值 返回批量撤销
+  if (revocation_count == BiasedLockingBulkRevokeThreshold) &#123;
+    return HR_BULK_REVOKE;
+  &#125;
+
+  // 达到阈值 返回批量重偏向
+  if (revocation_count == BiasedLockingBulkRebiasThreshold) &#123;
+    return HR_BULK_REBIAS;
+  &#125;
+
+  // 返回单个线程撤销
+  return HR_SINGLE_REVOKE;
+&#125;
+
+static BiasedLocking::Condition bulk_revoke_or_rebias_at_safepoint(oop o,
+                                                                   bool bulk_rebias,
+                                                                   bool attempt_rebias_of_object,
+                                                                   JavaThread* requesting_thread) &#123;
+  assert(SafepointSynchronize::is_at_safepoint(), &quot;must be done at safepoint&quot;);
+
+  if (TraceBiasedLocking) &#123;
+    tty-&gt;print_cr(&quot;* Beginning bulk revocation (kind == %s) because of object &quot;
+                  INTPTR_FORMAT &quot; , mark &quot; INTPTR_FORMAT &quot; , type %s&quot;,
+                  (bulk_rebias ? &quot;rebias&quot; : &quot;revoke&quot;),
+                  p2i((void *) o), (intptr_t) o-&gt;mark(), o-&gt;klass()-&gt;external_name());
+  &#125;
+
+  jlong cur_time = os::javaTimeMillis();
+  o-&gt;klass()-&gt;set_last_biased_lock_bulk_revocation_time(cur_time);
+
+
+  Klass* k_o = o-&gt;klass();
+  Klass* klass = k_o;
+
+  // 批量重偏向
+  if (bulk_rebias) &#123;
+    // Use the epoch in the klass of the object to implicitly revoke
+    // all biases of objects of this data type and force them to be
+    // reacquired. However, we also need to walk the stacks of all
+    // threads and update the headers of lightweight locked objects
+    // with biases to have the current epoch.
+
+    // If the prototype header doesn&#39;t have the bias pattern, don&#39;t
+    // try to update the epoch -- assume another VM operation came in
+    // and reset the header to the unbiased state, which will
+    // implicitly cause all existing biases to be revoked
+    if (klass-&gt;prototype_header()-&gt;has_bias_pattern()) &#123;
+      int prev_epoch = klass-&gt;prototype_header()-&gt;bias_epoch();
+      klass-&gt;set_prototype_header(klass-&gt;prototype_header()-&gt;incr_bias_epoch());
+      int cur_epoch = klass-&gt;prototype_header()-&gt;bias_epoch();
+
+      // Now walk all threads&#39; stacks and adjust epochs of any biased
+      // and locked objects of this data type we encounter
+      for (JavaThread* thr = Threads::first(); thr != NULL; thr = thr-&gt;next()) &#123;
+        GrowableArray&lt;MonitorInfo*&gt;* cached_monitor_info = get_or_compute_monitor_info(thr);
+        for (int i = 0; i &lt; cached_monitor_info-&gt;length(); i++) &#123;
+          MonitorInfo* mon_info = cached_monitor_info-&gt;at(i);
+          oop owner = mon_info-&gt;owner();
+          markOop mark = owner-&gt;mark();
+          if ((owner-&gt;klass() == k_o) &amp;&amp; mark-&gt;has_bias_pattern()) &#123;
+            // We might have encountered this object already in the case of recursive locking
+            assert(mark-&gt;bias_epoch() == prev_epoch || mark-&gt;bias_epoch() == cur_epoch, &quot;error in bias epoch adjustment&quot;);
+            owner-&gt;set_mark(mark-&gt;set_bias_epoch(cur_epoch));
+          &#125;
+        &#125;
+      &#125;
+    &#125;
+
+    // At this point we&#39;re done. All we have to do is potentially
+    // adjust the header of the given object to revoke its bias.
+    revoke_bias(o, attempt_rebias_of_object &amp;&amp; klass-&gt;prototype_header()-&gt;has_bias_pattern(), true, requesting_thread, NULL);
+  &#125; else &#123;
+    //批量撤销的逻辑
+    if (TraceBiasedLocking) &#123;
+      ResourceMark rm;
+      tty-&gt;print_cr(&quot;* Disabling biased locking for type %s&quot;, klass-&gt;external_name());
+    &#125;
+
+    // Disable biased locking for this data type. Not only will this
+    // cause future instances to not be biased, but existing biased
+    // instances will notice that this implicitly caused their biases
+    // to be revoked.
+    klass-&gt;set_prototype_header(markOopDesc::prototype());
+
+    // Now walk all threads&#39; stacks and forcibly revoke the biases of
+    // any locked and biased objects of this data type we encounter.
+    for (JavaThread* thr = Threads::first(); thr != NULL; thr = thr-&gt;next()) &#123;
+      GrowableArray&lt;MonitorInfo*&gt;* cached_monitor_info = get_or_compute_monitor_info(thr);
+      for (int i = 0; i &lt; cached_monitor_info-&gt;length(); i++) &#123;
+        MonitorInfo* mon_info = cached_monitor_info-&gt;at(i);
+        oop owner = mon_info-&gt;owner();
+        markOop mark = owner-&gt;mark();
+        if ((owner-&gt;klass() == k_o) &amp;&amp; mark-&gt;has_bias_pattern()) &#123;
+          revoke_bias(owner, false, true, requesting_thread, NULL);
+        &#125;
+      &#125;
+    &#125;
+
+    // Must force the bias of the passed object to be forcibly revoked
+    // as well to ensure guarantees to callers
+    revoke_bias(o, false, true, requesting_thread, NULL);
+  &#125;
+
+  if (TraceBiasedLocking) &#123;
+    tty-&gt;print_cr(&quot;* Ending bulk revocation&quot;);
+  &#125;
+
+  BiasedLocking::Condition status_code = BiasedLocking::BIAS_REVOKED;
+
+  if (attempt_rebias_of_object &amp;&amp;
+      o-&gt;mark()-&gt;has_bias_pattern() &amp;&amp;
+      klass-&gt;prototype_header()-&gt;has_bias_pattern()) &#123;
+    markOop new_mark = markOopDesc::encode(requesting_thread, o-&gt;mark()-&gt;age(),
+                                           klass-&gt;prototype_header()-&gt;bias_epoch());
+    o-&gt;set_mark(new_mark);
+    status_code = BiasedLocking::BIAS_REVOKED_AND_REBIASED;
+    if (TraceBiasedLocking) &#123;
+      tty-&gt;print_cr(&quot;  Rebiased object toward thread &quot; INTPTR_FORMAT, (intptr_t) requesting_thread);
+    &#125;
+  &#125;
+
+  assert(!o-&gt;mark()-&gt;has_bias_pattern() ||
+         (attempt_rebias_of_object &amp;&amp; (o-&gt;mark()-&gt;biased_locker() == requesting_thread)),
+         &quot;bug in bulk bias revocation&quot;);
+
+  return status_code;
+&#125;</code></pre>
+<h2 id="偏向锁"><a href="#偏向锁" class="headerlink" title="偏向锁"></a>偏向锁</h2><h2 id="轻量级锁"><a href="#轻量级锁" class="headerlink" title="轻量级锁"></a>轻量级锁</h2><h3 id="加锁-1"><a href="#加锁-1" class="headerlink" title="加锁"></a>加锁</h3><p>线程在执行同步块之前，JVM会先在当前的线程的栈帧中创建一个Lock Record,其包含一个用于存储对象头中的mark word(又称为Displaced Mark Word)以及一个指向对象的指针</p>
+<ul>
+<li>在线程栈中创建一个Lock Record,将其obj字段指向锁对象  </li>
+<li>直接通过CAS指令将Lock Record的地址存储在对象头的mark word中，如果对象处于无锁状态则修改成功，代表该线程获得了轻量级锁。如果失败，进入下一步骤  </li>
+<li>如果是当前线程已经持有该锁了，代表这是一次锁重入。设置Lock Record第一部分(Displaced Mark Word)为null,起到一个重入计数器的作用，然后结束</li>
+<li>锁升级为重量级锁  </li>
+</ul>
+<h3 id="解锁-1"><a href="#解锁-1" class="headerlink" title="解锁"></a>解锁</h3><ul>
+<li>遍历线程栈，找到所有obj字段等于当前锁对象的Lock Record</li>
+<li>如果Lock Record的Displaced Mark Word为null,代表这是一次重入，将obj设置为null后continue</li>
+<li>如果Lock Record的Displaced Mark Word不为null,则利用CAS指令将对象头的mark word恢复成为Displaced Mark Word.如果成功则continue,否则升级为重量级锁<h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2>重量级锁的状态下，对象的mark word为指向一个堆中monitor对象的指针<br>monitor对象包括字段: cxq(ContentionList) EntryList WaitSet owner<br>其中xcq EntryList WaitSet都是由ObjectWaiter的链表结构，owner指向持有锁的线程<br>当一个线程尝试获得锁时,如果该锁已经被占用，则会将该线程封装成一个ObjectWaiter对象插入到cxq的队列尾部，然后暂停当前线程。当持有锁的的线程释放锁前，会将xcq中的所有元素移动到EntryList中，并唤醒EntryList的队首线程<br>如果一个线程在同步块中调用了Object#wait方法，会将该线程对应的ObjectWaiter从EntryList移除并加入到WaitSet中，然后释放锁。当wait的线程被notify之后，会将对应的ObjectWaiter从WaitSet移动到EntryList中</li>
+</ul>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><ul>
+<li>LockRecord是什么<br>当前线程栈中用于存储锁对象的MarkWord的拷贝，又称为Displaced MarkWord<table>
+<thead>
+<tr>
+<th>LockRecord</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Owner</td>
+<td>初始时为NULL表示当前没有任何线程拥有该monitor record,当线程成功拥有该锁后保存线程唯一标识，当锁被释放后又设置NULL</td>
+</tr>
+<tr>
+<td>EntryQ</td>
+<td>关联一个系统互斥锁</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/Synchronized%E5%81%8F%E5%90%91%E9%94%81/">http://wjtest-wj.github.io/2020/11/13/Synchronized偏向锁/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#DEMO"><span class="toc-number">1.</span> <span class="toc-text">DEMO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jvm%E9%87%8D%E8%A6%81%E7%B1%BB"><span class="toc-number">2.</span> <span class="toc-text">jvm重要类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%A6%81"><span class="toc-number">3.</span> <span class="toc-text">概要</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E9%94%81"><span class="toc-number">3.1.</span> <span class="toc-text">加锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E9%94%81"><span class="toc-number">3.2.</span> <span class="toc-text">解锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E9%87%8D%E5%81%8F%E5%90%91%E4%B8%8E%E6%92%A4%E9%94%80"><span class="toc-number">3.3.</span> <span class="toc-text">批量重偏向与撤销</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-number">4.</span> <span class="toc-text">底层实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Lock-Record"><span class="toc-number">4.1.</span> <span class="toc-text">Lock Record</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#prototype-header"><span class="toc-number">4.2.</span> <span class="toc-text">prototype_header</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81%E7%9A%84%E8%8E%B7%E5%8F%96"><span class="toc-number">4.3.</span> <span class="toc-text">偏向锁的获取</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.3.1.</span> <span class="toc-text">代码执行流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81%E7%9A%84%E6%92%A4%E9%94%80"><span class="toc-number">4.4.</span> <span class="toc-text">偏向锁的撤销</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.4.1.</span> <span class="toc-text">执行流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81%E7%9A%84%E9%87%8A%E6%94%BE"><span class="toc-number">4.5.</span> <span class="toc-text">偏向锁的释放</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%B9%E9%87%8F%E9%87%8D%E5%81%8F%E5%90%91%E5%92%8C%E6%89%B9%E9%87%8F%E6%92%A4%E9%94%80"><span class="toc-number">4.6.</span> <span class="toc-text">批量重偏向和批量撤销</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81"><span class="toc-number">5.</span> <span class="toc-text">偏向锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-number">6.</span> <span class="toc-text">轻量级锁</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E9%94%81-1"><span class="toc-number">6.1.</span> <span class="toc-text">加锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E9%94%81-1"><span class="toc-number">6.2.</span> <span class="toc-text">解锁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-number">7.</span> <span class="toc-text">重量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-number">8.</span> <span class="toc-text">问题</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/Springboot%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">&lt; Springboot启动流程</a><a class="next" href="/2020/11/13/SSL%E8%AF%81%E4%B9%A6/">SSL证书 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

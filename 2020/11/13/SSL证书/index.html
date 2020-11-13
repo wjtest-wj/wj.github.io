@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>SSL证书 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">SSL证书</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/SSL%E8%AF%81%E4%B9%A6/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/SSL/">SSL</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h1 id="主要格式"><a href="#主要格式" class="headerlink" title="主要格式"></a>主要格式</h1><ul>
+<li>DER CER 文件是二进制格式，只保存证书，不保存私钥</li>
+<li>PEM 一般是文本格式，可保存证书，可保存私钥</li>
+<li>CRT 可以是二进制格式，可以是文本格式，与DER格式相同，不保存私钥</li>
+<li>PFX P12 二进制格式，同时包含证书和私钥，一般有密钥保护</li>
+<li>JKS 二进制格式，同时包含证书和私钥，一般有密码保护</li>
+</ul>
+<h1 id="DER"><a href="#DER" class="headerlink" title="DER"></a>DER</h1><p>该格式是二进制文件内容，JAVA和Windows服务器偏向于使用这种编码格式</p>
+<h2 id="openSSL查看"><a href="#openSSL查看" class="headerlink" title="openSSL查看"></a>openSSL查看</h2><pre><code>opensl x509 -in certificate.der -inform der -text -noout</code></pre>
+<h2 id="转换为pem"><a href="#转换为pem" class="headerlink" title="转换为pem"></a>转换为pem</h2><pre><code>openssl x509 -in cert.crt -inform der -outform pem -out cert.pem</code></pre>
+<h1 id="PEM"><a href="#PEM" class="headerlink" title="PEM"></a>PEM</h1><p>Privacy Enhanced Mail, 一般为文本格式，以——BEGIN…开头，以——END…结尾。中间的内容是BASE64需要拿到成功。<br>这种格式可以保存证书和私钥，有时我们也把PEM格式的私钥的后缀改为.key以区别证书与私钥。<br>这种格式常用于Apache和Nginx服务器</p>
+<h2 id="openssl查看"><a href="#openssl查看" class="headerlink" title="openssl查看"></a>openssl查看</h2><pre><code>openssl x509 -in certificate.pem -text -noout</code></pre>
+<h2 id="转换为DER"><a href="#转换为DER" class="headerlink" title="转换为DER"></a>转换为DER</h2><pre><code></code></pre>
+<h1 id="CRT"><a href="#CRT" class="headerlink" title="CRT"></a>CRT</h1><p>Certificate的简称，有可能是PEM编码格式，也有可能是DER编码格式。</p>
+<h1 id="PFX"><a href="#PFX" class="headerlink" title="PFX"></a>PFX</h1><p>Predecessor of PKCS#12,这种格式是二进制格式，且证书和私钥存在一个PFX文件中。一般用于Windows上的IIS服务器。改格式的文件一般会有一个密码用于保证私钥的安全</p>
+<h2 id="openssl查看-1"><a href="#openssl查看-1" class="headerlink" title="openssl查看"></a>openssl查看</h2><pre><code>openssl pkcs12 -in for-iis.pfx</code></pre>
+<h2 id="转换为PEM"><a href="#转换为PEM" class="headerlink" title="转换为PEM"></a>转换为PEM</h2><pre><code>openssl pkcs12 -in for-iis.pfx -out for-iis.pem -nodes</code></pre>
+<h1 id="JKS"><a href="#JKS" class="headerlink" title="JKS"></a>JKS</h1><p>Java Key Storage，这是JAVA的专属格式，利用JAVA的一个叫keytool的工具可以进行格式转换。一般用于Tomcat服务器。</p>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/SSL%E8%AF%81%E4%B9%A6/">http://wjtest-wj.github.io/2020/11/13/SSL证书/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E6%A0%BC%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">主要格式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#DER"><span class="toc-number">2.</span> <span class="toc-text">DER</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#openSSL%E6%9F%A5%E7%9C%8B"><span class="toc-number">2.1.</span> <span class="toc-text">openSSL查看</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E4%B8%BApem"><span class="toc-number">2.2.</span> <span class="toc-text">转换为pem</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PEM"><span class="toc-number">3.</span> <span class="toc-text">PEM</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#openssl%E6%9F%A5%E7%9C%8B"><span class="toc-number">3.1.</span> <span class="toc-text">openssl查看</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E4%B8%BADER"><span class="toc-number">3.2.</span> <span class="toc-text">转换为DER</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CRT"><span class="toc-number">4.</span> <span class="toc-text">CRT</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PFX"><span class="toc-number">5.</span> <span class="toc-text">PFX</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#openssl%E6%9F%A5%E7%9C%8B-1"><span class="toc-number">5.1.</span> <span class="toc-text">openssl查看</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E4%B8%BAPEM"><span class="toc-number">5.2.</span> <span class="toc-text">转换为PEM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JKS"><span class="toc-number">6.</span> <span class="toc-text">JKS</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/Synchronized%E5%81%8F%E5%90%91%E9%94%81/">&lt; Synchronized偏向锁</a><a class="next" href="/2020/11/13/Spring_ioc%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">Spring_ioc启动流程 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

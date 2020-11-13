@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>Spring_aop启动流程 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">Spring_aop启动流程</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/Spring_aop%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Spring/">Spring</a>&nbsp;&bull;&nbsp;<a href="/categories/Spring/Spring-AOP/">Spring AOP</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><p><img src="spring_aop%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.png"><br>AnnotationAwareAspectJAutoProxyCreator =&gt; InstantiationAwareBeanPostProcessor =&gt; beanPostProcessor<br>1, 传入配置类，创建 ioc容器<br>2, 注册配置类，调用refresh()刷新容器<br>3, registerBeanPostProcessors(beanFactory)；注册bean的后置处理器来方便拦截bean的创建  </p>
+<ul>
+<li>先获取ioc容器已经定义了的需要创建对象的所有BeanPostProcessor</li>
+<li>给容器加别的BeanPostProcessor</li>
+<li>优先注册PriorityOrdered</li>
+<li>再给容器中注册实现了Ordered接口的BeanPostProcessor</li>
+<li>注册没实现优先级接口的BeanPostProcessor</li>
+<li>注册BeanPostProcessor,实际上就是创建BeanPostProcessor对象，保存在容器中</li>
+<li>创建(internalAutoProxyCreator=AnnotationAwareAspectJAutoProxyCreator)</li>
+<li>创建 Bean的实例</li>
+<li>populateBean: 给bean的各种属性赋值</li>
+<li>initializeBean: 初始化bean</li>
+<li>invokeAwareMethods: 处理Aware接口的方法回调</li>
+<li>applyBeanPostProcessorsBeforeInitialization(): 应用后置处理器的postProcessBeforeInitialization</li>
+<li>invokeInitMethods: 执行自定义的初始化方法</li>
+<li>applyBeanPostProcessorsBeanAfterInitialization():执行后置处理器的postProcessAfterInitialization</li>
+<li>创建BeanPostProcessor internalAutoProxyCreator成功: -&gt; aspectJAdvisorsBuilder</li>
+<li>把BeanPostProcessor注册到BeanFactory中<br>4, finishBeanFactoryInitialization(beanFactory) 完成BeanFactory初始化； 创建 剩下的单实例Bean</li>
+<li>遍历获取容器中所有的Bean,依次创建对象getBean(beanName) getBean-&gt;doGetBean -&gt; getSingleton</li>
+<li>创建bean</li>
+<li>先从缓存中获取当前bean,如果能获取到，说明bean是可以获取到直接使用，否则再创建</li>
+<li>createBean (BeanPostProcessor是在Bean对象创建 完成初始化前后调用的; InstantiationAwareBeanPostProcessor是在创建 Bean实例之前先尝试用后置处理器返回对象的)</li>
+<li>resolveBeforeInstantiation 希望后置处理器在此能返回一个代理对象:如果能返回代理对象，如果不能就继续</li>
+<li>后置处理器先尝试返回对象</li>
+<li>applyBeanPostProcessorBeforeInstantiation 拿到所有后置处理器，如果是InstantiationAwareBeanPostProcessor 执行postProcessBeforeInst</li>
+<li>如果bean不为空</li>
+<li>doCreateBean 真正的去创建一个Bean实例<br>5, AnnotationAwareAspectJAutoProxyCreator 在每一个bean创建之前，调用postProcessBeforeInstantiation</li>
+<li>postProcessBeforeInstantiation</li>
+<li>判断当前bean是否在advisedBeans(保存了所有需要增强bean)</li>
+<li>判断当前bean是否在基础类型的Bean(实现了Advise Pointcut Advisor等)或者是否是切面(有没有切面注解)</li>
+<li>是否需要跳过</li>
+<li>获取候选的增强器(通知方法)List<Advisor> candiateAdvisors =&gt; InstantiationModelAwarePointcutAdvisor</li>
+<li>判断增强器类型是否是AspectJPointcutAdvisor类型的，返回true</li>
+<li>父类永远返回false</li>
+<li>postProcessAfterInitialization</li>
+<li>wrapIfNecessary</li>
+<li>获取当前bean的所有增强器(通知方法)</li>
+<li>找到能在当前bean使用的增强器(找哪些通知方法是需要切入的)</li>
+<li>获取到能在bean使用的增强器</li>
+<li>给增强器排序</li>
+<li>保存当前bean在advisedBeans</li>
+<li>如果当前bean需要增强，创建当前bean的代理对象</li>
+<li>获取所有增强器(通知方法)</li>
+<li>保存到proxyFactory</li>
+<li>创建代理对象</li>
+<li>JdkDynamicAopProxy(cnfig) jdk动态代理</li>
+<li>ObjenesisCglibAopProxy(config); cglib的动态代理</li>
+<li>给容器中返回当前组件使用cglib增强了的代理对象</li>
+<li>以后容器中获取到的就是这个组件的代理对象</li>
+</ul>
+<p>目标方法执行</p>
+<ul>
+<li>容器中保存了组件的代理对象(cglib的增强后的对象)，这个对象里面保存了详细信息</li>
+<li>cglibAopProxy.intercept(); 拦截目标方法的执行</li>
+<li>根据ProxyFactory对象获取想要执行的方法的拦截器链<br>List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice</li>
+<li>List<Object> interceptorList保存所有拦截器链</li>
+<li>遍历所有的Advisor,将其转为Interceptor (registry.Interceptors(advisor)</li>
+<li>将增强器转为List<MethodInterceptor></li>
+<li>如果是MethodInterceptor,直接加入到集合中</li>
+<li>如果不是，使用AdvisorAdapter将增强器转为MethodInterceptor<br>转换完成，返回数组</li>
+<li>如果没有拦截器链，直接执行目标方法<br>拦截器链(每一个通知方法又被包装为方法拦截器，利用MethodInterceptor机制)</li>
+<li>如果有拦截器链，把需要执行的目标对象，目标方法，拦截器链等信息传入创建一个CglibMethodInvocation并调用 其proceed方法</li>
+<li>拦截器链的触发过程</li>
+<li>没有拦截器，直接执行目标方法，或者拦截器的索引和拦截器数组-1大小一样(执行到最后一个拦截器)</li>
+<li>链式获取每一个拦截器，拦截器执行invoke方法，每一个拦截器等待下一个拦截器执行完成返回以后再来执行； 拦截器链的机制，保证通知方法与目标方法的执行顺序</li>
+</ul>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/Spring_aop%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">http://wjtest-wj.github.io/2020/11/13/Spring_aop启动流程/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">流程</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/Spring_ioc%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">&lt; Spring_ioc启动流程</a><a class="next" href="/2020/11/13/Class%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9B%E5%BB%BA/">Class对象的创建 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

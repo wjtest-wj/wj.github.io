@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>class对象头 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">class对象头</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/class%E5%AF%B9%E8%B1%A1%E5%A4%B4/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/java/">java</a>&nbsp;&bull;&nbsp;<a href="/categories/java/jvm/">jvm</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><pre><code>public class User &#123;
+    private String name;
+    private Integer age;
+    private boolean sex;
+
+    public static void main(String[] args) &#123;
+        User user = new User();
+        System.out.println(ClassLayout.parseInstance(user).toPrintable());
+    &#125;
+&#125;
+关闭指针压缩
+klass.User object internals:
+ OFFSET  SIZE                TYPE DESCRIPTION                               VALUE
+      0     4                     (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)
+      4     4                     (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4                     (object header)                           28 30 9d 25 (00101000 00110000 10011101 00100101) (631058472)
+     12     4                     (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+     16     1             boolean User.sex                                  false
+     17     7                     (alignment/padding gap)                  
+     24     8    java.lang.String User.name                                 null
+     32     8   java.lang.Integer User.age                                  null
+Instance size: 40 bytes
+Space losses: 7 bytes internal + 0 bytes external = 7 bytes total
+打开指针压缩(默认)
+klass.User object internals:
+ OFFSET  SIZE                TYPE DESCRIPTION                               VALUE
+      0     4                     (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)
+      4     4                     (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4                     (object header)                           05 c1 00 f8 (00000101 11000001 00000000 11111000) (-134168315)
+     12     1             boolean User.sex                                  false
+     13     3                     (alignment/padding gap)                  
+     16     4    java.lang.String User.name                                 null
+     20     4   java.lang.Integer User.age                                  null
+Instance size: 24 bytes
+Space losses: 3 bytes internal + 0 bytes external = 3 bytes total
+打开指针压缩，并调用hashCode方法 如果不调用hashCode，对象头不会存储对象hash
+hasCode为:7f31245a
+klass.User object internals:
+ OFFSET  SIZE                TYPE DESCRIPTION                               VALUE
+      0     4                     (object header)                           01 5a 24 31 (00000001 01011010 00100100 00110001) (824465921)
+      4     4                     (object header)                           7f 00 00 00 (01111111 00000000 00000000 00000000) (127)
+      8     4                     (object header)                           05 c1 00 f8 (00000101 11000001 00000000 11111000) (-134168315)
+     12     1             boolean User.sex                                  false
+     13     3                     (alignment/padding gap)                  
+     16     4    java.lang.String User.name                                 null
+     20     4   java.lang.Integer User.age                                  null
+Instance size: 24 bytes
+Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
+<p>指针压缩后对象头所占内存为12字节<br>每创建一个新的对象，JVM就会相应地创建一个对应类型的oop对象，存储在堆中。对应于hotstpot中为instanceOopDesc,基类为oopDesc<br><img src="instanceOopDesc.png"><br><img src="oopDesc.png"><br>普通对象对象头由一个markOop和一个联合体组成,markOop就是MarkWord,联合体是指向类的元数据指针 _compressed_klass<br><img src="narrowKlass_markOop.png"><br>markOop和narrowKlass定义在oopsHierarchy.hpp中.<br>narrowKlass是一个junit, junit定义在globalDefinitions_visCPP.hpp头中，是一个无符号整型(4个字节)<br>markOop是markOopDesc类型指针<br><img src="markOopDesc.png"><br><img src="markOopDesc_narrow.png"><br><img src="markOopDesc_narrow2.png"><br>根据markOopDesc的源码显示markOopDesc并不会指向一个实例，直接把64位markWord数据存储在指针中  </p>
+<h2 id="MarkWord组成"><a href="#MarkWord组成" class="headerlink" title="MarkWord组成"></a>MarkWord组成</h2><table>
+<thead>
+<tr>
+<th>锁状态/gc</th>
+<th>Mark Word(64 bits)</th>
+<th>-</th>
+<th>-</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>无锁</td>
+<td>unused:25</td>
+<td>hashcode:31</td>
+<td>usunsed:1</td>
+<td>age:4</td>
+</tr>
+<tr>
+<td>偏向锁</td>
+<td>thread:54</td>
+<td>epoch:2</td>
+<td>unused:1</td>
+<td>age:4</td>
+</tr>
+<tr>
+<td>轻量级锁</td>
+<td>ptr_to_lock_record:62(指向栈中锁记录LockRecord的指针)</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>重量级锁</td>
+<td>ptr_to_heavyweight_monitor:62(指向互斥量(重量级锁)的指针)</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>gc标志</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<h2 id="MarkWord的状态判断"><a href="#MarkWord的状态判断" class="headerlink" title="MarkWord的状态判断"></a>MarkWord的状态判断</h2><pre><code>  enum &#123; locked_value             = 0, //0 00 轻量级锁
+         unlocked_value           = 1, //0 01 无锁
+         monitor_value            = 2, //0 10 重量级锁
+         marked_value             = 3, //0 11 gc标志
+         biased_lock_pattern      = 5 //1 01 偏向锁
+  &#125;;
+  enum &#123; lock_mask                = right_n_bits(lock_bits), //锁标志 lock_bits为2 即 最后两位用来标识锁
+         lock_mask_in_place       = lock_mask &lt;&lt; lock_shift, //锁标志位置 lock_shift为0
+         biased_lock_mask         = right_n_bits(lock_bits + biased_lock_bits), //偏向锁掩码 lock_bits为2 biased_lock_bits为1 所以为3 结果为111
+         biased_lock_mask_in_place= biased_lock_mask &lt;&lt; lock_shift, //偏向锁位置 lock_shift为0
+         biased_lock_bit_in_place = 1 &lt;&lt; biased_lock_shift, 
+         age_mask                 = right_n_bits(age_bits),
+         age_mask_in_place        = age_mask &lt;&lt; age_shift,
+         epoch_mask               = right_n_bits(epoch_bits),
+         epoch_mask_in_place      = epoch_mask &lt;&lt; epoch_shift,
+         cms_mask                 = right_n_bits(cms_bits),
+         cms_mask_in_place        = cms_mask &lt;&lt; cms_shift
+#define nth_bit(n)        (n &gt;= BitsPerWord ? 0 : OneBit &lt;&lt; (n)) //1左移1个字n位 如果超过1个字的位数，则返回0
+#define right_n_bits(n)   (nth_bit(n) - 1) //1左移n位后再减1 假获取右边n位1 比如right_n_bits(2) 则为 1&lt;&lt;2为100 再减1 则为 011
+#define left_n_bits(n)    (right_n_bits(n) &lt;&lt; (n &gt;= BitsPerWord ? 0 : (BitsPerWord - n)))</code></pre>
+<p>通过以上了解，可以知道上图中的User的对象头信息MarkWord为0x00 00 00 7f 31 24 5a 01 (小端模式)，其中unused25位为00 00 00 再加7中最高位0。hash 25位为7f(111 1111) 31(0011 0001) 24(0010 0100) 5a(0101 1000) 最后8位(0-unused 0000-age 001-biaselock和lock)</p>
+<h2 id="锁升级流程"><a href="#锁升级流程" class="headerlink" title="锁升级流程"></a>锁升级流程</h2><p>无锁 -&gt; 偏向锁(jvm启动后4秒才会开启:防止系统sync同步线程竞争) -&gt; 轻量级锁(自旋锁) -&gt; 重量级锁  </p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><ul>
+<li>identity hashcode<br>如果没有重写默认的hashcode方法，默认的hashcode计算出的就是identity hashcode,这个值是被存储在对象头中的，如果重写之后，就不能叫identity hashcode了，计算出的值也不会存储在对象头中</li>
+<li>为什么只有调用了hashcode方法才会初始化hash?<br>当一个对象已经计算过identity hash code，它就无法进入偏向锁状态；<br>当一个对象当前正处于偏向锁状态，并且需要计算其identity hash code的话，则它的偏向锁会被撤销，并且锁会膨胀为轻量级锁或者重量锁；</li>
+<li>为什么初始化hash后就不能用偏向锁了?<br>因为无论是轻量级锁和重量级锁，markWord都会用一个指针指向lockRecord或monitor,但是偏向锁没有，并且偏向锁还需要记录ThreadId<br>会覆盖掉hashcode。 所以偏向锁就无法找到原来的hashcode了.故初始化hash后就不能用偏向锁了</li>
+<li>synchronized锁的到底是什么?<br>如果锁的是实例，则用的是实例对象的对象头<br>如果锁的是类，则用的是Class对象的对象头(Class对象也存放在堆中)</li>
+</ul>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/class%E5%AF%B9%E8%B1%A1%E5%A4%B4/">http://wjtest-wj.github.io/2020/11/13/class对象头/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MarkWord%E7%BB%84%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">MarkWord组成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MarkWord%E7%9A%84%E7%8A%B6%E6%80%81%E5%88%A4%E6%96%AD"><span class="toc-number">3.</span> <span class="toc-text">MarkWord的状态判断</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%81%E5%8D%87%E7%BA%A7%E6%B5%81%E7%A8%8B"><span class="toc-number">4.</span> <span class="toc-text">锁升级流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">问题</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/maven-setting%E9%85%8D%E7%BD%AE/">&lt; MAVEN-SETTING配置</a><a class="next" href="/2020/11/13/Synchronized%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81/">Synchronized重量级锁 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>23种设计模式 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">23种设计模式</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/%E4%BB%A3%E7%A0%81/">代码</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h2 id="创建型"><a href="#创建型" class="headerlink" title="创建型"></a>创建型</h2><p>对类的实例化进行了抽象，能够将模块中对象创建和对象使用分离。</p>
+<ul>
+<li>简单工厂模式</li>
+<li>工厂方法模式</li>
+<li>抽象工厂模式</li>
+<li>单例模式</li>
+<li>生成器模式</li>
+<li>原型模式<h2 id="结构型"><a href="#结构型" class="headerlink" title="结构型"></a>结构型</h2>描述如何将类或者对象结合在一起形成更大的结构，就像搭积木.</li>
+<li>外观模式</li>
+<li>适配器模式</li>
+<li>桥接模式</li>
+<li>代理模式</li>
+<li>装饰者模式</li>
+<li>享元模式<h2 id="行为型"><a href="#行为型" class="headerlink" title="行为型"></a>行为型</h2>对在不同的对象之间划分责任和算法的抽象化</li>
+<li>职责链模式</li>
+<li>命令模式</li>
+<li>解释器模式</li>
+<li>迭代器模式</li>
+<li>中介者模式</li>
+<li>备忘录模式</li>
+<li>观察者模式</li>
+<li>状态模式</li>
+<li>策略模式</li>
+<li>模板方法模式</li>
+<li>访问者模式</li>
+</ul>
+<h3 id="简单工厂模式"><a href="#简单工厂模式" class="headerlink" title="简单工厂模式"></a>简单工厂模式</h3><p>简单工厂模式: 专门定义一个类来负责创建其他类的实例。可以根据创建方法的参数来返回不同类的实例,被创建的实例通常都具有共同的父类.<br><img src="%E7%AE%80%E5%8D%95%E5%B7%A5%E5%8E%82.png"></p>
+<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>使用者只需要给工厂类传入一个正确的约定好的参数，就可以获取所需要的对象，而不需要知道其创建细节，一定程度上减少系统的耦合</li>
+<li>客户端无须知道所创建的具体产品类的类名，只需要知道具体产品类所对应的参数即可，减少开发者的记忆成本。<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>如果业务上添加新产品的话，就需要修改工厂类原有的判断逻辑，这其实是违背了开闭原则的</li>
+<li>在产品类型较多时，有可能造成工厂逻辑过于复杂。所以简单工厂模式比较适合产品种类比较少而且增多的概率很低的情况</li>
+</ul>
+<h3 id="工厂方法模式"><a href="#工厂方法模式" class="headerlink" title="工厂方法模式"></a>工厂方法模式</h3><p>工厂方法模式又称为工厂模式，工厂父类负责定义创建产品对象的公共接口，而工厂子类则负责生成具体的产品对象，即通过不同的工厂子类来创建不同的产品对象<br><img src="%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95.png"></p>
+<h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>用户只需要关心其所需产品对应的具体工厂是哪一个即可，不需要关心产品的创建细节，也不需要知道具体产品类的类名</li>
+<li>当系统中加入新产品时，不需要修改抽象工厂和抽象产品提供的接品，也无须修改客户端和其他的具体工厂和具体产品，而只要添加一个具体工厂和与其对应的具体产品就可以了，符合了开闭原则<h4 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>当系统中加入新产品时，除了需要提供新的产品类之外，还要提供与其对应的具体工厂类。因此系统中类的个数将成对增加，增加了系统的复杂度<h4 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h4></li>
+<li>在jdk中,Collection相关类使用了工厂方法模式<br>Collection 相当于抽象工厂角色，Collection的实现类如ArrayList,HashSet等皆可看成具体工厂<br>抽象产品为Iterator 每个具体工厂中的Iterator实现类充当具体产品,用户不需要关心具体容器的迭代原理，统一调iterator方法获得统一迭代器即可</li>
+<li>在mybatis中的SqlSessionFactory也使用了工厂方法模式<br>SqlSessionFactory相当于抽象工厂角色，DefaultSqlSessionFactory为具体工厂<br>抽象产品为SqlSession 具体产品为DefaultSqlSession</li>
+<li>slf4j中用的<br>抽象工厂角色为ILoggerFactory 工厂方法为getLogger 具体工厂角色为LoggerContext NOPLoggerFactory 等<br>抽象产品为Logger 具体产品为Logger的实现类</li>
+</ul>
+<h3 id="抽象工厂模式"><a href="#抽象工厂模式" class="headerlink" title="抽象工厂模式"></a>抽象工厂模式</h3><p>提供一个创建一系列相关或相互依赖对象接口，而无须指定它们具体的类. 相比于工厂方法模式，抽象工厂模式致力于产品族.<br>具体不同点见以下链接:```<a target="_blank" rel="noopener" href="https://blog.csdn.net/liu88010988/article/details/50799902%60%60">https://blog.csdn.net/liu88010988/article/details/50799902``</a><br>以渠道为例，目前是工厂方法模式，由于渠道可能具体多种能力(换汇，支付，收款)<br>那么变成抽象工厂即为:抽象工厂-渠道，具体工厂-换汇，具体工厂-支付，具体工厂-收款<br>抽象工厂模式其实是工厂方法模式的加强，工厂方法模式一般类中只有一个抽象产品，其具体工厂也只创建一类产品<br>而抽象工厂模式抽象工厂角色中可以定义多个抽象方法，其具体工厂可以创建多种具体产品</p>
+<h4 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>具体产品在应用层代码隔离，不需要关心产品细节。只需要知道自己需要的产品是属于哪个工厂的即可.当一个产品族中的多个对象被设计成一起工作时，它能够保证客户端始终只命名用同一个产品族中的对象。这对一些需要根据当前环境来决定其行为的软件系统来说，是一种非常实用的设计模式<h4 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>规定了所有可能被创建的产品集合，产品族中扩展新的产品困难，需要修改抽象工厂的接口</li>
+</ul>
+<h3 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h3><p>单例模式确保某一个类只有一个实例，并提供一个访问它的全局访问点</p>
+<h4 id="七种写法"><a href="#七种写法" class="headerlink" title="七种写法"></a>七种写法</h4><ul>
+<li>饿汉模式<pre><code>public class Singleton &#123;  
+   private static Singleton instance = new Singleton();  
+   private Singleton ()&#123;
+   &#125;
+   public static Singleton getInstance() &#123;  
+   return instance;  
+   &#125;  
+&#125;  </code></pre>
+</li>
+<li>懒汉模式(线程不安全)<pre><code>public class Singleton &#123;  
+    private static Singleton instance;  
+    private Singleton ()&#123;
+    &#125;   
+    public static Singleton getInstance() &#123;  
+    if (instance == null) &#123;  
+        instance = new Singleton();  
+    &#125;  
+    return instance;  
+    &#125;  
+&#125;  </code></pre>
+</li>
+<li>懒汉模式(线程安全)<pre><code>public class Singleton &#123;  
+    private static Singleton instance;  
+    private Singleton ()&#123;
+    &#125;
+    public static synchronized Singleton getInstance() &#123;  
+    if (instance == null) &#123;  
+        instance = new Singleton();  
+    &#125;  
+    return instance;  
+    &#125;  
+&#125;  </code></pre>
+</li>
+<li>双重检查模式(DCL)<pre><code>public class Singleton &#123;  
+    private volatile static Singleton instance;  
+    private Singleton ()&#123;
+    &#125;   
+    public static Singleton getInstance() &#123;  
+    if (instance== null) &#123;  
+        synchronized (Singleton.class) &#123;  
+        if (instance== null) &#123;  
+            instance= new Singleton();  
+        &#125;  
+       &#125;  
+   &#125;  
+   return singleton;  
+   &#125;  
+&#125;  </code></pre>
+</li>
+<li>静态内部类单例模式<br>第一次调用getInstance方法时虚拟机加载SingletonHolder并初始化sInstance<pre><code>public class Singleton &#123; 
+  private Singleton()&#123;
+  &#125;
+    public static Singleton getInstance()&#123;  
+      return SingletonHolder.sInstance;  
+  &#125;  
+  private static class SingletonHolder &#123;  
+      private static final Singleton sInstance = new Singleton();  
+  &#125;  
+&#125; </code></pre>
+</li>
+<li>枚举单例<pre><code>public enum Singleton &#123;  
+   INSTANCE;  
+   public void doSomeThing() &#123;  
+   &#125;  
+&#125;  </code></pre>
+</li>
+<li>使用容器实现单例模式<pre><code>public class SingletonManager &#123; 
+　　private static Map&lt;String, Object&gt; objMap = new HashMap&lt;String,Object&gt;();
+　　private Singleton() &#123; 
+　　&#125;
+　　public static void registerService(String key, Objectinstance) &#123;
+　　　　if (!objMap.containsKey(key) ) &#123;
+　　　　　　objMap.put(key, instance) ;
+　　　　&#125;
+　　&#125;
+　　public static ObjectgetService(String key) &#123;
+　　　　return objMap.get(key) ;
+　　&#125;
+&#125;</code></pre>
+<h4 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h4></li>
+<li>提供了对唯一实例的受控访问。因为单例类封装了它的唯一实例，所以它可以严格控制客户怎样以及何时访问它</li>
+<li>因为该类在系统内存中只存在一个对象，所以可以节约系统资源<h4 id="缺点-3"><a href="#缺点-3" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>由于单例模式中没有抽象层，因此单例类很难进行扩展</li>
+<li>对于有垃圾回收系统的语言Java,C#来说，如果对象长时间不被利用，则可能会被回收。那么如果这个单例持有一些数据的话，在回收后重新实例化时就不复存在了。</li>
+</ul>
+<h3 id="生成器模式"><a href="#生成器模式" class="headerlink" title="生成器模式"></a>生成器模式</h3><p>它将一个复杂对象的构建与它的表示分离，使得同样的构建过程可以创建不同的表示<br><img src="%E5%BB%BA%E9%80%A0%E8%80%85.png"></p>
+<h4 id="优点-4"><a href="#优点-4" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>客户端不必知道产品内部组成的细节，将产品本身与产品的创建过程解耦，使得相同的创建过程可以创建不同的产品对象</li>
+<li>每一个具体建造者都相对独立，而与其他的具体建造者无关，因此可以很方便地替换具体建造者或增加新的具体建造者，用户使用不同的具体建造者即可得到不同的产品对象</li>
+<li>增加新的具体建造者无须修改原有类库的代码，指挥者类针对抽象建造者类需要那天看公告，系统扩展方便，符合”开闭原则”</li>
+<li>可以更加精细地控制产品的创建过程。将复杂产品的创建步骤分解在不同的方法中，使得创建过程更加清晰，也更方便使用程序来控制创建过程</li>
+</ul>
+<h4 id="缺点-4"><a href="#缺点-4" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>建造者模式所创建的产品一般具有较多的共同点，其组成部分相似，如果产品之间的差异性很大，则不适合使用建造者模式，因此其使用范围受到一定的限制</li>
+<li>如果产品的内部变化复杂，可能会导致需要定义很多具体建造者类来实现这种变化，导致系统变得很庞大。</li>
+</ul>
+<h3 id="原型模式"><a href="#原型模式" class="headerlink" title="原型模式"></a>原型模式</h3><p>原型模式就像复印技术，根据原对象复印出一个新对象，并根据需求对新对象进行微调</p>
+<h4 id="优点-5"><a href="#优点-5" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>可以利用原型模式简化对象创建过程，尤其是对一些创建过程繁琐，包含对象层级比较多的对象来说，使用原型模式可以节约系统资源，提高对象生成的效率</li>
+<li>可以很方便的通过改变值来生成新的对象：有些对象之间的差别可能只在于某些值的不同；用原型模式可以快速复制出新的对象并手动修改值即可。<h4 id="缺点-5"><a href="#缺点-5" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>对象包含的所有对象都需要配备一个克隆的方法，这就使得在对象层级比较多的情况下，代码量会很大，也更加复杂</li>
+</ul>
+<h3 id="装饰者模式"><a href="#装饰者模式" class="headerlink" title="装饰者模式"></a>装饰者模式</h3><p>不改变原有对象的前提下，动态地给一个对象增加一些额外的功能<br><img src="%E8%A3%85%E9%A5%B0.jpg"></p>
+<h4 id="优点-6"><a href="#优点-6" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>比继承更加灵活:不同于在编译期起作用的继承;装饰者模式可以在运行时扩展一个对象的功能。另外也可以通过配置文件在运行时选择不同的装饰器，从而实现不同的行为。也可以通过不同的组合，可以实现不同效果</li>
+<li>符合”开闭原则”:装饰者和被装饰者可以独立变化。用户可以根据需要增加新的装饰类，在使用时再对其进行组合，原有代码无须改变<h4 id="缺点-6"><a href="#缺点-6" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>装饰者模式需要创建一些具体装饰类，会增加系统的复杂度</li>
+</ul>
+<h3 id="外观模式"><a href="#外观模式" class="headerlink" title="外观模式"></a>外观模式</h3><p>外观模式定义了一个高层接口，为子系统中的一组接口提供一个统一的接口。外观模式又称为门面模式，它是一种结构型设计模式<br><img src="%E5%A4%96%E8%A7%82.png"></p>
+<h4 id="优点-7"><a href="#优点-7" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>实现了客户端与子系统间的解耦:客户端无需知道子系统的接口，简化了客户端调用子系统的调用过程，使得子系统使用起来更加容易。同时便于子系统的扩展和维护。</li>
+<li>符合迪米特法则:子系统只需要将需要外部调用的接口暴露给外观类即可，而且他的接口则可以隐藏起来<h4 id="缺点-7"><a href="#缺点-7" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>违背了开闭原则:在不引入抽象外观类的情况下，增加新的子系统可能需要修改外观类或客户端的代码</li>
+</ul>
+<h3 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h3><p>为某个对象提供一个代理，并由这个代理对象控制对原对象的访问<br><img src="%E4%BB%A3%E7%90%86.png"></p>
+<h4 id="优点-8"><a href="#优点-8" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>降低系统的耦合度:代理模式能够协调调用者和被调用者，在一定程度上降低了系统的耦合度。</li>
+<li>不同类型的代理可以对客户端对目标对象的访问进行不同的控制:<ol>
+<li>远程代理，使得客户端可以访问在远程机器上的对象，远程机器可能具有更好的计算性能与处理速度，可以快速响应并处理客户端请求</li>
+<li>虚拟代理通过使用一个小对象来代表一个大对象，可以减少系统资源的消耗，对系统进行优化并提高运行速度</li>
+<li>保护代理可以控制客户端对真实对象的使用权限<h4 id="缺点-8"><a href="#缺点-8" class="headerlink" title="缺点"></a>缺点</h4></li>
+</ol>
+</li>
+<li>由于在客户端和被代理对象之间增加了代理对象，因此可能会让客户端请求的速度变慢</li>
+</ul>
+<h3 id="享元模式"><a href="#享元模式" class="headerlink" title="享元模式"></a>享元模式</h3><p>运用共享技术复用大量细粒度的对象，降低程序内存的占用，提高程序的性能.<br><img src="%E4%BA%AB%E5%85%83.png"></p>
+<h4 id="优点-9"><a href="#优点-9" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>使用享元模式可以减少内存中对象的数量，使得相同或相似对象在内存中只保存一份，降低系统的使用内存，也可以提性能</li>
+<li>享元模式的外部状态相对独立，而且不会影响其内部状态，从而使得享元对象可以在不同的环境中被共享<h4 id="缺点-9"><a href="#缺点-9" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>使用享元模式需要分离出内部状态和外部状态，这使得程序的逻辑复杂化</li>
+<li>对象在缓冲池中的复用需要考虑线程问题</li>
+</ul>
+<h3 id="桥接模式"><a href="#桥接模式" class="headerlink" title="桥接模式"></a>桥接模式</h3><p><img src="%E6%A1%A5%E6%8E%A5.png"><br>将抽象部分与它的实现部分分离，使它们都可以独立的变化</p>
+<h4 id="优点-10"><a href="#优点-10" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>扩展性好，符合开闭原则:将抽象与实现分离，让二者可以独立变化<h4 id="缺点-10"><a href="#缺点-10" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>在设计之前，需要识别出两个独立变化的维度</li>
+</ul>
+<h3 id="适配器模式"><a href="#适配器模式" class="headerlink" title="适配器模式"></a>适配器模式</h3><p>将一个接口转换成客户希望的另一个接口，使得原本由于接口不兼容而不能一起工作的那些类可以一起工作。适配器模式的别名是包装器模式，是一种结构型设计模式<br><img src="%E9%80%82%E9%85%8D%E5%99%A8.png"></p>
+<h4 id="优点-11"><a href="#优点-11" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>符合开闭原则:使用适配器而不需要改变现有类，提高类的复用性</li>
+<li>目标类和适配类解耦，提高程序扩展性<h4 id="缺点-11"><a href="#缺点-11" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>增加了系统的复杂性</li>
+</ul>
+<h3 id="职责链模式"><a href="#职责链模式" class="headerlink" title="职责链模式"></a>职责链模式</h3><p>避免请求发送者与接收者耦合在一起，让多个对象都有可能接收请求，将这些对象连接成一条链，并且沿着这条链传递请求，直到有对象处理它为止。<br><img src="%E8%B4%A3%E4%BB%BB%E9%93%BE.png"></p>
+<h4 id="优点-12"><a href="#优点-12" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>职责链模式使得一个对象无须知道是其他哪一个对象处理其请求，对象仅需知道该请求会被处理即可，接收者和发送者都没有对方的明确信息，且链中的对象不发知道链的结构，由客户端负责链的创建，降低了系统的耦合度</li>
+<li>请求处理对象仅需维持一个指向其后继者的引用，而不需要维持它对所有的候选者的引用，可简化对象的相互连接</li>
+<li>在给对象分派职责时，职责链可以给我们更多的灵活性，可以通过在运行时对该链进行动态的增加或修改来增加或改变处理一个请求的职责</li>
+<li>在系统中增加一个新的具体请求处理者时无须修改原有系统的代统，只需要在客户端重新建链即可，从这一点来看是符合开闭原则的<h4 id="缺点-12"><a href="#缺点-12" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>由于一个请求没有明确的接收者，那么就不能保证它一定会被处理，该请求可能一直到链的末端都得不到处理；一有求也可能因职责链没有被正确配置而得不到处理</li>
+<li>对于比较长的职责链，请求的处理可能涉及到多个处理对象，系统性能将受到一定影响，而且在进行代码调试时不太方便</li>
+<li>如果建链不当，可能会造成循环调用，将导致系统陷入死循环</li>
+</ul>
+<h3 id="命令模式"><a href="#命令模式" class="headerlink" title="命令模式"></a>命令模式</h3><p>将一个请求封装为一个对象，从而让我们可用不同的请求对客户进行参数化；对请求排队或者记录请求日志，以及支持可撤销的操作。命令模式是一种对象行为型模式，其别名为动作模式或事务模式<br><img src="%E5%91%BD%E4%BB%A4.png"></p>
+<h4 id="优点-13"><a href="#优点-13" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>降低系统的耦合度。由于请求者与接收者之间不存在直接引用，因此请求者与接收者之间实现完全解耦，相同的请求者可以对应不同的接收者，同样，相同的接收者也可以供不同的请求者使用，两者之间具有良好的独立性</li>
+<li>新的命令可以很容易地加入到系统中。由于增加新的具体命令类不会影响到其他类因此增加新的具体命令类很容易，无须修改原有系统源代码，甚至客户类代码，满足开闭原则的要求</li>
+<li>可以比较容易地设计一个命令队列或宠命令(组合命令)</li>
+<li>为请求的撤销和恢复操作提供了一种设计和实现方案<h4 id="缺点-13"><a href="#缺点-13" class="headerlink" title="缺点"></a>缺点</h4></li>
+<li>使用命令模式可能会导致某些系统有过多的具体命令类。因为针对每一个对请求接收者的调用操作都需要设计一个具体命令类，因此在某些系统中可能需要提供大量的具体命令类，这将影响命令模式的使用</li>
+</ul>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">http://wjtest-wj.github.io/2020/11/13/设计模式/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%9E%8B"><span class="toc-number">1.</span> <span class="toc-text">创建型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">结构型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%8C%E4%B8%BA%E5%9E%8B"><span class="toc-number">3.</span> <span class="toc-text">行为型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.1.</span> <span class="toc-text">简单工厂模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9"><span class="toc-number">3.1.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9"><span class="toc-number">3.1.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.2.</span> <span class="toc-text">工厂方法模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-1"><span class="toc-number">3.2.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-1"><span class="toc-number">3.2.2.</span> <span class="toc-text">缺点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-number">3.2.3.</span> <span class="toc-text">实例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.3.</span> <span class="toc-text">抽象工厂模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-2"><span class="toc-number">3.3.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-2"><span class="toc-number">3.3.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.4.</span> <span class="toc-text">单例模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%83%E7%A7%8D%E5%86%99%E6%B3%95"><span class="toc-number">3.4.1.</span> <span class="toc-text">七种写法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-3"><span class="toc-number">3.4.2.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-3"><span class="toc-number">3.4.3.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%99%A8%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.5.</span> <span class="toc-text">生成器模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-4"><span class="toc-number">3.5.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-4"><span class="toc-number">3.5.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.6.</span> <span class="toc-text">原型模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-5"><span class="toc-number">3.6.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-5"><span class="toc-number">3.6.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.7.</span> <span class="toc-text">装饰者模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-6"><span class="toc-number">3.7.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-6"><span class="toc-number">3.7.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.8.</span> <span class="toc-text">外观模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-7"><span class="toc-number">3.8.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-7"><span class="toc-number">3.8.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.9.</span> <span class="toc-text">代理模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-8"><span class="toc-number">3.9.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-8"><span class="toc-number">3.9.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.10.</span> <span class="toc-text">享元模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-9"><span class="toc-number">3.10.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-9"><span class="toc-number">3.10.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.11.</span> <span class="toc-text">桥接模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-10"><span class="toc-number">3.11.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-10"><span class="toc-number">3.11.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.12.</span> <span class="toc-text">适配器模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-11"><span class="toc-number">3.12.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-11"><span class="toc-number">3.12.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%81%8C%E8%B4%A3%E9%93%BE%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.13.</span> <span class="toc-text">职责链模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-12"><span class="toc-number">3.13.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-12"><span class="toc-number">3.13.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.14.</span> <span class="toc-text">命令模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-13"><span class="toc-number">3.14.1.</span> <span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-13"><span class="toc-number">3.14.2.</span> <span class="toc-text">缺点</span></a></li></ol></li></ol></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/%E7%BA%A2%E9%BB%91%E6%A0%91/">&lt; 红黑树</a><a class="next" href="/2020/11/13/mysql-%E9%97%B4%E9%9A%99%E9%94%81/">MYSQL-间隙锁 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

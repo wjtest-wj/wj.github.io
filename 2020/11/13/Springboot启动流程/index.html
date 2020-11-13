@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>Springboot启动流程 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">Springboot启动流程</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/Springboot%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Spring-Boot/">Spring Boot</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h2 id="流程图"><a href="#流程图" class="headerlink" title="流程图"></a>流程图</h2><p><img src="spring_boot%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.png"><br>spring boot启动流程 创建一个SpringApplication,执行SpringAplication的run方法<br>1, initialize（sources)初始化资源和环境 sources为传进来的Startup.class类</p>
+<ul>
+<li>将传进来的Startup.class类放入sources数组中</li>
+<li>判断是否为web环境(是否有Servlet类和ConfigurableWebApplicationContext类)</li>
+<li>初始化spring.factories中的ApplicationContextInitializer和ApplicationListener</li>
+<li>getSpringFactoriesInstances(org.springframework.context.ApplicationContextInitializer) 从SpringFactoriesInstances中获取实现了ApplicationContextInitializer接口的实例</li>
+<li>SpringFactoriesLoader.loadFactoryNames(type, classLoader)</li>
+<li>从所有jar包下寻找META-INF/spring.factories文件</li>
+<li>遍历返回的结果，查询是否有key为ApplicationContextInitializer的value</li>
+<li>org.springframework.boot.context.ConfigurationWarningsApplicationContextInitializer</li>
+<li>org.springframework.boot.context.ContextIdApplicationContextInitializer</li>
+<li>org.springframework.boot.context.config.DelegatingApplicationContextInitializer</li>
+<li>org.springframework.boot.context.embedded.ServerPortInfoApplicationContextInitializer</li>
+<li>org.springframework.boot.autoconfigure.SharedMetadataReaderFactoryContextInitializer</li>
+<li>org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer</li>
+<li>createSpringFactoriesInstances实例化满足条件的结果(ApplicationContextInitializer接口)</li>
+<li>排序返回</li>
+<li>setInitializers 将获取的结果全部添加进SpringApplication内的initializers字段</li>
+<li>同样的流程加载ApplicationListener</li>
+<li>判断主程序Class类</li>
+<li>获取StackTraceElement堆栈</li>
+<li>判断堆栈中方法为main的Class 执行Class.forName返回</li>
+<li>赋值给SpringApplication的mainASpplicationClass类</li>
+</ul>
+<p>2, 执行SpringApplication的run方法</p>
+<ul>
+<li><p>configureHeadlessProperty</p>
+</li>
+<li><p>获取系统属性java.awt.headless 如果没有则取默认值headless为true。 再放入系统属性java.awt.headless中 该属性为true表示用于在缺失显示屏、鼠标或者键盘时的系统配置</p>
+</li>
+<li><p>getRunListeners</p>
+</li>
+<li><p>创建SpringApplicationRunListeners(logger, getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args)))</p>
+</li>
+<li><p>利用SpringFactories模式获取SpringApplicationRunListener的实现类</p>
+</li>
+<li><p>EventPublishingRunListener</p>
+</li>
+<li><p>加入到SpringApplicationRunListeners的字段listeners</p>
+</li>
+<li><p>listeners.starting</p>
+</li>
+<li><p>执行每个SpringApplicationRunListneer的实现类的starting方法</p>
+</li>
+<li><p>EventPublishingRunListener发布事件ApplicationStartedEvent</p>
+</li>
+<li><p>获取所有监听了ApplicationStartedEvent的ApplicationListener</p>
+</li>
+<li><p>LoggingApplicationListener 监听了该事件 配置日志组件息</p>
+</li>
+<li><p>BackgroundPreinitializer</p>
+</li>
+<li><p>DelegatingApplicationListener</p>
+</li>
+<li><p>ApplicationArguments applicationArguments = new DefaultApplicationArguments(args) 初始化启动参数</p>
+</li>
+<li><p>ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationarguments)</p>
+</li>
+<li><p>getOrCreateEnvironment 创建一个ConfigurableEnvironment类 如果是web环境 返回StandardServletEnvironment</p>
+</li>
+<li><p>configureEnvironment(environment, applicationArguments.getSourceArgs) 配置环境</p>
+</li>
+<li><p>configurePropertySources</p>
+</li>
+<li><p>configureProfiles profile 设置激活的profile</p>
+</li>
+<li><p>listeners.environmentPrepared</p>
+</li>
+<li><p>通过EventPublishingRunListener 发布ApplicationEnvironmentPreparedEvent</p>
+</li>
+<li><p>BootstrapApplicationListener TODO</p>
+</li>
+<li><p>LoggingSystemShutdownListener</p>
+</li>
+<li><p>ConfigFileApplicatinListener 获取所有spring.factories中的EnvironmentPostProcessor 调用其postProcessEnvironment方法</p>
+</li>
+<li><p>printBanner 打印banner</p>
+</li>
+<li><p>createApplicationContext 创建Application上下文 如果是web环境，创建AnnotationConfigEmbeddedWebApplicationContext 否则创建 AnnotationConfigApplicationContext</p>
+</li>
+<li><p>new FailureAnalyzers(context) 创建FailureAnalyzers 校验</p>
+</li>
+<li><p>prepareContext</p>
+</li>
+<li><p>context.setEnvironment设置environment</p>
+</li>
+<li><p>postProcessApplicationContext</p>
+</li>
+<li><p>applyInitializers(context)</p>
+</li>
+<li><p>遍历之前赋值的initializers (实现了ApplicationContextInitializer接口的类)</p>
+</li>
+<li><p>执行initializer方法</p>
+</li>
+<li><p>BootstrapApplicationListener-AncestorInitializer</p>
+</li>
+<li><p>listeners.contextPrepared 发布contextPrepared事件</p>
+</li>
+<li><p>load(context,source.toArray(new Object[sources.size())])) 加载资源</p>
+</li>
+<li><p>contextLoaded 发布contextLoaded事件</p>
+</li>
+<li><p>refreshContext 刷新上下文</p>
+</li>
+<li><p>执行容器的刷新步骤</p>
+</li>
+<li><p>prepareRefresh</p>
+</li>
+<li><p>obtainFreshBeanFactory</p>
+</li>
+<li><p>prepareBeanFactory</p>
+</li>
+<li><p>postProcessBeanFactory</p>
+</li>
+<li><p>invokeBeanFactoryPostProcessor</p>
+</li>
+<li><p>registerBeanPostProcessors</p>
+</li>
+<li><p>initMesageSource</p>
+</li>
+<li><p>initApplicationEventMulticaster</p>
+</li>
+<li><p>onRefresh</p>
+</li>
+<li><p>registerListeners</p>
+</li>
+<li><p>finishBeanFactoryInitialization</p>
+</li>
+<li><p>finishRefresh</p>
+</li>
+<li><p>afterRefresh</p>
+</li>
+<li><p>执行ApplicationRunner</p>
+</li>
+<li><p>listeners.finished 发布ApplicationReadyEvent</p>
+<h2 id="auto-configure"><a href="#auto-configure" class="headerlink" title="auto configure"></a>auto configure</h2><h3 id="SPRING-BOOT从哪里获取外部BEAN并加以管理"><a href="#SPRING-BOOT从哪里获取外部BEAN并加以管理" class="headerlink" title="SPRING BOOT从哪里获取外部BEAN并加以管理"></a>SPRING BOOT从哪里获取外部BEAN并加以管理</h3><p>一般在jar包下会有META-INF/spring.factories 文件信息，里面包含了EnableAutoConfiguration的自动配置类</p>
+<pre><code># Auto Configure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
+org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
+org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,\
+org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration,\
+org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration,\</code></pre>
+<h2 id="SpringApplication实例化"><a href="#SpringApplication实例化" class="headerlink" title="SpringApplication实例化"></a>SpringApplication实例化</h2><pre><code>public SpringApplication(ResourceLoader resourceLoader, Class&lt;?&gt;... primarySources) &#123;
+  this.sources = new LinkedHashSet();
+  this.bannerMode = Mode.CONSOLE;
+  this.logStartupInfo = true;
+  this.addCommandLineProperties = true;
+  this.addConversionService = true;
+  this.headless = true;
+  this.registerShutdownHook = true;
+  this.additionalProfiles = new HashSet();
+  this.isCustomEnvironment = false;
+  this.lazyInitialization = false;
+  this.resourceLoader = resourceLoader;
+  Assert.notNull(primarySources, &quot;PrimarySources must not be null&quot;);
+  //启动主类 XXXStartUp.java
+  this.primarySources = new LinkedHashSet(Arrays.asList(primarySources));
+  //推断当前WEB应用类型(none表示当前的应用既不是一个web应用也不是一个reactive应用，是一个纯后台应用; servlet表示当前应用是一个标准的web应用。reactive是spring5当中的新特性，表示是一个响应式的web应用)
+  this.webApplicationType = WebApplicationType.deduceFromClasspath();
+  //实例化spring.factories 中的 ApplicationContextInitializer
+  this.setInitializers(this.getSpringFactoriesInstances(ApplicationContextInitializer.class));
+  //实例化spring.factories 中的ApplicationListener
+  this.setListeners(this.getSpringFactoriesInstances(ApplicationListener.class));
+  //推断主入口类
+  this.mainApplicationClass = this.deduceMainApplicationClass();
+&#125;
+</code></pre>
+</li>
+</ul>
+<p>private static Map&lt;String, List<String>&gt; loadSpringFactories(@Nullable ClassLoader classLoader) {<br>    MultiValueMap&lt;String, String&gt; result = (MultiValueMap)cache.get(classLoader);<br>    if (result != null) {<br>        return result;<br>    } else {<br>        try {<br>            Enumeration<URL> urls = classLoader != null ? classLoader.getResources(“META-INF/spring.factories”) : ClassLoader.getSystemResources(“META-INF/spring.factories”);<br>            LinkedMultiValueMap result = new LinkedMultiValueMap();</p>
+<pre><code>        while(urls.hasMoreElements()) &#123;
+            URL url = (URL)urls.nextElement();
+            UrlResource resource = new UrlResource(url);
+            Properties properties = PropertiesLoaderUtils.loadProperties(resource);
+            Iterator var6 = properties.entrySet().iterator();
+
+            while(var6.hasNext()) &#123;
+                Entry&lt;?, ?&gt; entry = (Entry)var6.next();
+                String factoryTypeName = ((String)entry.getKey()).trim();
+                String[] var9 = StringUtils.commaDelimitedListToStringArray((String)entry.getValue());
+                int var10 = var9.length;
+
+                for(int var11 = 0; var11 &lt; var10; ++var11) &#123;
+                    String factoryImplementationName = var9[var11];
+                    result.add(factoryTypeName, factoryImplementationName.trim());
+                &#125;
+            &#125;
+        &#125;
+
+        cache.put(classLoader, result);
+        return result;
+    &#125; catch (IOException var13) &#123;
+        throw new IllegalArgumentException(&quot;Unable to load factories from location [META-INF/spring.factories]&quot;, var13);
+    &#125;
+&#125;</code></pre>
+<p>}</p>
+<pre><code>
+## SpringApplication run</code></pre>
+<p>public ConfigurableApplicationContext run(String… args) {<br>    StopWatch stopWatch = new StopWatch();<br>    stopWatch.start();<br>    ConfigurableApplicationContext context = null;<br>    Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList();<br>    //设置java.awt.headless的值，默认true 无须awt相关配置<br>    this.configureHeadlessProperty();<br>    //创建所有Spring运行监听器并发布应用启动事件 从spring.factories配置文件中获取SpringApplicationRunListener<br>    SpringApplicationRunListeners listeners = this.getRunListeners(args);<br>    listeners.starting();</p>
+<pre><code>Collection exceptionReporters;
+try &#123;
+    //初始化默认应用参数类
+    ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+    //根据运行监听器和应用参数来准备Spring环境
+    ConfigurableEnvironment environment = this.prepareEnvironment(listeners, applicationArguments);
+    this.configureIgnoreBeanInfo(environment);
+    //创建Banner打印类
+    Banner printedBanner = this.printBanner(environment);
+    //创建应用上下文
+    context = this.createApplicationContext();
+    //准备异常报告器 也是从spring.factories配置文件中获取
+    exceptionReporters = this.getSpringFactoriesInstances(SpringBootExceptionReporter.class, new Class[]&#123;ConfigurableApplicationContext.class&#125;, context);
+    //准备应用上下文
+    this.prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+    //刷新应用上下文
+    this.refreshContext(context);
+    //应用上下文刷新后置处理
+    this.afterRefresh(context, applicationArguments);
+    stopWatch.stop();
+    //输出日志记录执行主类名，时间信息
+    if (this.logStartupInfo) &#123;
+        (new StartupInfoLogger(this.mainApplicationClass)).logStarted(this.getApplicationLog(), stopWatch);
+    &#125;
+    //发布应用上下文启动完成事件
+    listeners.started(context);
+    //执行所有Runner运行器
+    this.callRunners(context, applicationArguments);
+&#125; catch (Throwable var10) &#123;
+    this.handleRunFailure(context, var10, exceptionReporters, listeners);
+    throw new IllegalStateException(var10);
+&#125;
+
+try &#123;
+    //发布应用上下文就绪事件
+    listeners.running(context);
+    //返回应用上下文
+    return context;
+&#125; catch (Throwable var9) &#123;
+    this.handleRunFailure(context, var9, exceptionReporters, (SpringApplicationRunListeners)null);
+    throw new IllegalStateException(var9);
+&#125;</code></pre>
+<p>}</p>
+<pre><code></code></pre>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/Springboot%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">http://wjtest-wj.github.io/2020/11/13/Springboot启动流程/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">1.</span> <span class="toc-text">流程图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#auto-configure"><span class="toc-number">2.</span> <span class="toc-text">auto configure</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SPRING-BOOT%E4%BB%8E%E5%93%AA%E9%87%8C%E8%8E%B7%E5%8F%96%E5%A4%96%E9%83%A8BEAN%E5%B9%B6%E5%8A%A0%E4%BB%A5%E7%AE%A1%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">SPRING BOOT从哪里获取外部BEAN并加以管理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpringApplication%E5%AE%9E%E4%BE%8B%E5%8C%96"><span class="toc-number">3.</span> <span class="toc-text">SpringApplication实例化</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/Synchronized%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81/">&lt; Synchronized轻量级锁</a><a class="next" href="/2020/11/13/Synchronized%E5%81%8F%E5%90%91%E9%94%81/">Synchronized偏向锁 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>

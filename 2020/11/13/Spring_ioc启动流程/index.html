@@ -1,0 +1,146 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>Spring_ioc启动流程 | Weijia</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.1.1"></head><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Weijia</a></h1></div><p class="m-desc">......</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">Spring_ioc启动流程</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/11/13/Spring_ioc%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">2020-11-13</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Spring/">Spring</a>&nbsp;&bull;&nbsp;<a href="/categories/Spring/Spring-IOC/">Spring IOC</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><p><img src="spring%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B.png"><br>容器创建过程 refresh<br>1, prepareRefresh 预处理</p>
+<ul>
+<li>initPropertySources 初始化一些属性设置；子类自定义个性化的属性设置方法</li>
+<li>getEnvironment.validateRequiredProperties 属性校验(必须字段)</li>
+<li>earlyApplicationEvents = new LinkedHashSet<ApplicationSet>() 保存容器中的一些早期的事件<br>2, obtainFreshBeanFactory 获取BeanFactory</li>
+<li>refreshBeanFactory 刷新(创建)BeanFactory</li>
+<li>创建了this.beanFactory = new DefaultListableBeanFactory 设置id</li>
+<li>getBeanFactory 返回刚才GenericApplicationContext创建的BeanFactory</li>
+<li>将创建的BeanFactory返回(DefaultListableBeanFactory)<br>3, prepareBeanFactory BeanFactory的预准备工作(BeanFactory进行一些设置)</li>
+<li>设置BeanFactory的类加载器，支持表达式解析器</li>
+<li>添加部分BeanPostProcessor(ApplicationContextAwareProcessor)</li>
+<li>设置自动忽略的装配接口EnvironmentAware EmbeddedValueResolverAware,xxx</li>
+<li>注册可以解析的自动装配 可以在任何组件中自动注入BeanFactory ResourceLoader ApplicationEventPublisher</li>
+<li>添加BeanPostProcessor ApplicationListenerDetector</li>
+<li>添加编译时的AspectJ</li>
+<li>给BeanFactory中注册一些能用的组件:environment(ConfiguratableEnvironment) systemProperties(Map&lt;String,Object&gt;) systemEnvironment(Map&lt;String,Object)<br>4, postProcessBeanFactory(beanFactory); BeanFactory准备工作完成后进行的后置处理工作</li>
+<li>子类通过重写beanFactoryPostProcessor在BeanFactory创建并准备完成以后进行操作</li>
+</ul>
+<p>5, invokeBeanFactoryPostProcessors(beanFactory) 执行BeanFactoryPostProcessor</p>
+<ul>
+<li>BeanFactoryPostProcessor BeanFactory的后置处理器，在BeanFactory标准初始化之后执行的</li>
+<li>两个接口BeanFactoryPostProcessor BeanDefinitionRegistryPostProcesor</li>
+<li>执行BeanFactoryPostProcessor的方法</li>
+<li>获取所有的BeanDefinitionRegistryPostProcessor</li>
+<li>看先执行实现了PriorityOrdered优先级接口的BeanDefinitionRegistryPostProcessor<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+<li>再执行实现了Ordered顺序接口的BeanDefinitionRegistryPostProcessor<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+<li>最后执行没有实现任何优先级或者顺序接口的BeandefinitionRegistryPostProcessors<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+<li>再执行BeanFactoryPostProcessor的方法</li>
+<li>看先执行实现了PriorityOrdered优先级接口的BeanDefinitionRegistryPostProcessor<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+<li>再执行实现了Ordered顺序接口的BeanDefinitionRegistryPostProcessor<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+<li>最后执行没有实现任何优先级或者顺序接口的BeandefinitionRegistryPostProcessors<br>postProcessor.postProcessBeanDefinitionRegistry(registry)</li>
+</ul>
+<p>6, registerBeanPostProcessors 注册BeanPostProcessor（Bean的后置处理器)<br>不同类型的BeanPostProcessor的后置处理器执行时间不同<br>BeanPostProcessor</p>
+<ul>
+<li>DestructionAwareBeanPostProcessor</li>
+<li>InstantiatioAwareBeanPostProcessor</li>
+<li>SmartInstantiationPostProcessor<br>MergedBeanDefinitionPostProcessor(internalPostProcessors)</li>
+<li>获取所有的BeanPostProcessor 后置处理器都默认可以有PriorityOrdered Ordered接口来定义优先级</li>
+<li>先注册PrioryityOrdered优先级接口的BeanPostProcessor</li>
+<li>把每一个BeanPostProcessor添加到BeanFactory中 beanFactory.addBeanPostProcessor(postProcessor)</li>
+<li>再注册Ordered接口的</li>
+<li>最后注册没有实现任何优先级接口的</li>
+<li>最终注册MergedBeanDefinitionPostProcessor</li>
+<li>注册一个ApplicationListenerDetector 来在Bean创建完成后检查是否为ApplicationListener</li>
+</ul>
+<p>7, initMessageSource 初始化MessageSource组件(做国际化功能，消息绑定,消息解析)</p>
+<ul>
+<li>获取BeanFactory</li>
+<li>看容器中是否有id为messagesource的组件</li>
+<li>如果有赋值给messagesource，如果没有创建一个DelegatingMessageSource<br>MessageSource:取出国际化配置文件中的某个key的值</li>
+<li>注入BeanFactory</li>
+</ul>
+<p>8, initApplicationEventMulticaster 初始化事件派发器</p>
+<ul>
+<li>获取BeanFactory</li>
+<li>看容器中是否有applicationEventMulticaster的ApplicationEventMulticaster</li>
+<li>如果有赋值给applicationEventMulticaster 否则创建一个SimpleApplicatinEventMulticaster</li>
+<li>注入BeanFactory</li>
+</ul>
+<p>9, onRefresh 留给子容器重写onRefresh</p>
+<p>10, registerListeners 给容器中将所有项目里面的ApplicationListener注册进来</p>
+<ul>
+<li>从容器中拿到所有的ApplicationListener</li>
+<li>将每个监听器添加到事件派发器中<br>getApplicationEventMulticaster().addApplicationListenerBean</li>
+<li>派发之前步骤产生的事件</li>
+</ul>
+<p>11, finishBeanFactoryInitialization 初始化所有剩下的单实例Bean</p>
+<ul>
+<li>beanFactory.preInstantiateSingletons 初始化剩下的单实例Bean</li>
+<li>获取容器中的所有Bean 依次进行初始化和创建对象</li>
+<li>拿到Bean的定义信息RootBeanDefinition</li>
+<li>Bean不是抽象的，是单实例的，不是懒加载的</li>
+<li>判断是否是FactoryBean 是否是实现FactoryBean接口的Bean</li>
+<li>不是FactoryBean 利用getBean创建对象</li>
+<li>getBean =&gt; ioc.getBean()</li>
+<li>doGetBean</li>
+<li>先获取缓存中保存的单实例Bean 如果能获取到说明这个Bean已经创建过了</li>
+<li>缓存中获取不到，开始Bean的创建</li>
+<li>标记当前bean已经被创建</li>
+<li>获取Bean的定义信息</li>
+<li>获取当前Bean依赖的其他Bean 如果有按照getBean把依赖的Bean先创建出来</li>
+<li>启动单实例Bean的创建流程</li>
+<li>createBean(beanName, mbd, args);</li>
+<li>Object bean = resolveBeforeInstantiation(beanName, mbdToUse); 让BeanPostProcessor先拦截返回代理对象<br>InstantiationAwareBeanPostProcessor提前执行<br>先触发postProcessBeforeInstantiation<br>如果有返回值，触发postProcessAfterInitialization</li>
+<li>如果前面的InstantiationAwareBeanPostProcessor 无返回值</li>
+<li>调用doCreateBean</li>
+<li>createBeanInstance 创建Bean实例 利用工厂方法或者对象构造器创建实例</li>
+<li>applyMergedBeanDefinitionPostProcessors<br>调用MergedBeanDefinitionPostProcessor的postProcessMergedBeanDefinition</li>
+<li>populateBean 为Bean的属性赋值</li>
+<li>赋值之前</li>
+<li>拿到InstantiationAwareBeanPostProcessor后置处理器 执行postProcessAfterInstantiation</li>
+<li>拿到InstantiationAwareBeanPostProcessor后置处理器 执行postProcessPropertyValues</li>
+<li>应用Bean属性的值applyPropertyValues</li>
+<li>Bean初始化 initializeBean</li>
+<li>invokeAwareMethods 执行Aware接口的方法(BeanNameAware\BeanClassLoaderAware\ApplicationContextAware等)</li>
+<li>applyBeanPostProcessBeforeInitialization 后置处理器初始化之前<br>BeanPostProcessor.postProcessBeforeIntiialization</li>
+<li>invokeInitMethods 执行初始化方法</li>
+<li>applyBeanPostProcessAfterInitialization 后置处理器初始化之后<br>BeanPostProcessor.postProceeAfterInitialization</li>
+<li>注册Bean的销毁方法</li>
+<li>将创建的Bean放在缓存中singletonObjects<br>所有的Bean创建完成后<br>检查该Bean是否是SmartInitializingSingleton接口的；如果是，就执行afterSingletonInstantiated</li>
+</ul>
+<p>12, finishRefresh 完成BeanFactory的初始化创建 IOC容器就创建完成</p>
+<ul>
+<li>initLifecycleProcessor 初始化和生命周期有关的后置处理器</li>
+<li>getLifecycleProcessor.onRefresh 回调onRefresh方法</li>
+<li>publishEvent 发布容器刷新完成事件</li>
+</ul>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">weijia</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/11/13/Spring_ioc%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">http://wjtest-wj.github.io/2020/11/13/Spring_ioc启动流程/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://wjtest-wj.github.io">weijia的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">流程</span></a></li></ol></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/11/13/SSL%E8%AF%81%E4%B9%A6/">&lt; SSL证书</a><a class="next" href="/2020/11/13/Spring_aop%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">Spring_aop启动流程 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Weijia</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>
